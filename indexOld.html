@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title></title>
+	</head>
+
+	<body style="margin:0px; padding:0px; width:100%; height:100dvh; position:relative;">
+
+		<div id="mainArea" style="width:100%; height:100%; display:flex;">
+			<div id="filePane" style="height:calc(100% - 10px); min-width:300px; width:300px; padding:5px; display:flex; flex-direction:column; background-color:#444444; overflow-y:auto; scrollbar-width:none;"></div>
+			<div id="outputPane" style="height:100%; width:100%; background-color:#222222; display:flex; justify-content:center; align-items:center; overflow:auto; scrollbar-color:#aaaaaa #222222;"></div>
+		</div>
+
+		<div id="rightClickFileMenu" style="display:none; flex-direction:column; position:absolute; padding:5px; width:150px; background-color:#333333; border:solid #222222 1px; color:#eeeeee;"></div>
+
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="https://clarkeharrison.co.uk/zipGenerator.js"></script>
+		<script src="https://clarkeharrison.co.uk/qrCode.js"></script>
+		<script src="https://clarkeharrison.co.uk/kaplay.js"></script>
+
+		<script>
+			const filePane = document.getElementById("filePane");
+			const outputPane = document.getElementById("outputPane");
+			const rightClickFileMenu = document.getElementById("rightClickFileMenu");
+
+			let dragData = null;
+
+			let files = {
+				"Scripts": {
+					"Download Files.js": "downloadFile(JSON.stringify(files, null, 4), \"Files.json\");",
+					"Login.js": "outputPane.innerHTML = `\n    <div style=\"display:flex; flex-direction:column; background-color:#cccccc; border-radius:12px; padding:20px; gap:10px;\">\n        <input id=\"Username\" type=\"email\" placeholder=\"Username\" style=\"font-size:24px;\"></input>\n        <input id=\"Password\" type=\"password\" placeholder=\"Password\" style=\"font-size:24px;\"></input>\n        <input id=\"MFA\" type=\"text\" placeholder=\"MFA Code\" style=\"font-size:24px;\"></input>\n        <button id=\"LoginButton\" style=\"font-size:24px;\">Login</button>\n    </div>\n`;\n\n\nconst [username , password , mfa , loginButton] = [\"Username\" , \"Password\" , \"MFA\" , \"LoginButton\"].map(id => document.getElementById(id));\n\nloginButton.onclick = function() {\n    socketSendReply(\"verify\", {username : username.value , password : password.value , code : mfa.value}, function(reply) {\n        if (reply) {\n            outputPane.innerHTML = `<div style=\"font-size:32px; color:#ffffff;\">Logged In</div>`;\n        } else {\n            alert(\"Invalid Credentials, please try again.\")\n        }\n    });\n}",
+					"Upload Files.js": "uploadFile(function(fileName, fileData) {\n    if (!fileName.endsWith(\".json\")) return alert(\"You must upload a JSON file.\");\n    files = JSON.parse(fileData);\n    populateFilePane();\n})"
+				},
+				"Click Me.txt": "Here is the guide. Here are some changes!"
+			};
+
+            let socket;
+            let online = true;
+            try {
+                socket = io();
+                console.log("Connected to Server");
+            } catch {
+                online = false;
+                console.log("Server not found.");
+            }
+
+			const dbPromise = new Promise(resolve => {
+				const request = indexedDB.open("cacheDB", 1);
+				request.onupgradeneeded = () => request.result.createObjectStore("ch");
+				request.onsuccess = () => resolve(request.result);
+			});
+
+			loadFromCache("files").then((e) => {
+				if (e) files = e;
+				populateFilePane();
+			})
+
+			function populateFilePane() {
+				files = organizeFiles(files);
+				saveToCache("files", files);
+				filePane.innerHTML = "";
+				outputPane.innerHTML = "";
+
+				folderSearch(files, 0, filePane);
+
+				function folderSearch(obj, indent, parent) {
+					for (const key in obj) {
+						const folder = typeof obj[key] === "object";
+
+						let cont = document.createElement("div");
+						cont.style.cssText = `width:100%; display:${indent === 0 ? "flex" : "none"}; flex-direction:column;`;
+						parent.appendChild(cont);
+
+						let div = document.createElement("div");
+						div.style.cssText = `width:calc(100% - ${((indent * 20) + 5)}px - 15px); display:flex; border:solid #222222 1px; box-shadow:1px 1px 2px #111111; margin:5px ${(indent * 20) + 5}px; overflow-x:hidden; padding:4px; color:#ffffff; user-select:none; cursor:pointer;`;
+						div.innerHTML = `${folder ? "► " : ""}${key}`;
+						div.draggable = true;
+
+						// ===== DRAG START =====
+						div.addEventListener("dragstart", () => {
+							dragData = { parent: obj, key, div, draggingInFilePane: true };
+						});
+
+						// ===== DROP TARGET (folders only) =====
+						if (folder) {
+							div.addEventListener("dragover", (e) => {
+								e.preventDefault();
+								div.style.backgroundColor = "#333333";
+							});
+
+							div.addEventListener("dragleave", () => {
+								div.style.backgroundColor = "";
+							});
+
+							div.addEventListener("drop", (e) => {
+								e.preventDefault();
+								div.style.backgroundColor = "";
+
+								if (!dragData) return;
+								if (dragData.parent === obj[key]) return;
+								if (dragData.div == div) return;
+
+								obj[key][dragData.key] = dragData.parent[dragData.key];
+								delete dragData.parent[dragData.key];
+
+								dragData = null;
+								populateFilePane();
+							});
+						}
+
+						// ===== CLICK / OPEN =====
+						div.addEventListener("click", (e) => {
+							if (e.button !== 0) return; // only left mouse button
+							if (folder) {
+								for (let i = 1; i < cont.children.length; i++) {
+									cont.children[i].style.display =
+										cont.children[i].style.display === "flex" ? "none" : "flex";
+								}
+								div.innerHTML = div.innerHTML.startsWith("►")
+									? `▼ ${key}`
+									: `► ${key}`;
+							} else {
+								outputPane.innerHTML = "";
+								document.querySelectorAll("#filePane *").forEach((elem) => {
+									elem.style.backgroundColor = "rgba(0,0,0,0)";
+								})
+								div.style.backgroundColor = "#666666";
+								if (obj[key].startsWith("data:image/")) {
+									let img = document.createElement("img");
+									img.style.cssText = "width:calc(100% - 60px); height:calc(100% - 60px); padding:none; border:none; object-fit:contain; outline:none; image-rendering:pixelated;";
+									img.src = obj[key];
+									outputPane.appendChild(img);
+								} else if (obj[key].startsWith("data:audio/")) {
+								    const audio = document.createElement('audio');
+									audio.style.cssText = "width:calc(100% - 60px);";
+									audio.src = obj[key];
+									audio.controls = true;
+									outputPane.innerHTML = "";
+									outputPane.appendChild(audio);
+								} else if (obj[key].startsWith("data:audio/")) {
+									const video = document.createElement("video");
+									video.style.cssText = "width:calc(100% - 60px); height:calc(100% - 60px); padding:none; border:none; object-fit:contain; outline:none;";
+									video.src = obj[key];
+									video.controls = true;
+									video.width = 640;
+									video.height = 480;
+									outputPane.appendChild(video);
+								} else {
+									let txtArea = document.createElement("textarea");
+									txtArea.style.cssText = `width:calc(100% - 20px); height:calc(100% - 20px); padding:10px; border:none; outline:none; background-color:rgba(0,0,0,0); white-space:pre; resize:none; color:#ffffff; scrollbar-color:#aaaaaa #222222;`;
+									txtArea.value = obj[key];
+									txtArea.addEventListener("input", () => {
+										obj[key] = txtArea.value;
+										saveToCache("files", files);
+									});
+									outputPane.appendChild(txtArea);
+									txtArea.addEventListener('keydown', function(e) {
+										if (e.key === 'Tab') {
+											e.preventDefault();
+											const start = this.selectionStart;
+											const end = this.selectionEnd;
+											const spaces = '    ';
+											this.value = this.value.substring(0, start) + spaces + this.value.substring(end);
+											this.selectionStart = this.selectionEnd = start + spaces.length;
+										}
+									});
+								}
+							}
+						});
+
+						// ===== RIGHT CLICK =====
+						div.addEventListener("contextmenu", (e) => {
+							e.preventDefault()
+							rightClickFileMenu.style.display = "flex";
+							if (e.clientY > (window.innerHeight/2)) {
+								rightClickFileMenu.style.top = ``;
+								rightClickFileMenu.style.bottom = `${window.innerHeight - e.clientY}px`;
+							} else {
+								rightClickFileMenu.style.bottom = ``;
+								rightClickFileMenu.style.top = `${e.clientY}px`;
+							}
+							rightClickFileMenu.style.left = `${e.clientX}px`;
+							rightClickFileMenu.innerHTML = "";
+
+							function rightClickElem(name, onClick, lineUnder=true) {
+								let newElem = document.createElement("div")
+								newElem.style.cssText = `padding:4px 0px; ${lineUnder ? "border-bottom:solid #eeeeee 1px;" : ""} cursor:pointer;`;
+								newElem.innerHTML = name;
+								newElem.onclick = onClick;
+								rightClickFileMenu.appendChild(newElem);
+							}
+
+							if (key.endsWith(".js")) {
+								rightClickElem(`Run JS`, function() {
+									new Function(obj[key])();
+								})
+							}
+
+							if (key.endsWith(".html")) {
+								rightClickElem(`Show HTML`, function() {
+									outputPane.innerHTML = obj[key];
+								})
+							}
+
+							rightClickElem("Create File", function() {
+								const newName = prompt("Please enter the name of the file including it's extension.");
+								if (newName == "") return alert("Invalid file name.");
+								if (folder) {
+									if (newName in obj[key]) return alert("A file with that name already exists here.");
+									obj[key][newName] = "";
+								} else {
+									if (newName in obj) return alert("A file with that name already exists here.");
+									obj[newName] = "";
+								}
+								populateFilePane();
+							})
+
+							rightClickElem("Create Folder", function() {
+								const newName = prompt("Please enter the name of the folder.");
+								if (newName == "") return alert("Invalid file name.");
+								if (folder) {
+									if (newName in obj[key]) return alert("A folder with that name already exists here.");
+									obj[key][newName] = {};
+								} else {
+									if (newName in obj) return alert("A folder with that name already exists here.");
+									obj[newName] = {};
+								}
+								populateFilePane();
+							})
+
+							rightClickElem("Upload File", () => {
+								uploadFile(function(fileName, fileData) {
+									if (fileName in files) return alert("A folder with that name already exists here.");
+									files[fileName] = fileData;
+									populateFilePane();
+								})
+							});
+
+							rightClickElem(`Rename ${folder ? "Folder" : "File"}`, () => {
+								const newName = prompt(`Enter new name including extension if there was one.\n\nPrevious : ${key}`);
+								if (newName in obj) return alert("A file or folder with that name already exists here.");
+								obj[newName] = obj[key];
+								delete obj[key];
+								populateFilePane();
+							});
+
+							if (folder) {
+								rightClickElem("Download Folder", () => {
+									downloadZIP(obj[key], key);
+								});
+							} else {
+								rightClickElem("Download File", () => {
+									downloadFile(obj[key], key);
+								});
+							}
+
+							rightClickElem(`Delete ${folder ? "Folder" : "File"}`, function() {
+								if (Object.keys(files).length == 1) return alert("You cannot delete the last file/folder.");
+								if (prompt(`Enter 'YES' if you are sure that you want to delete ${key}.`) == "YES") delete obj[key];
+								populateFilePane();
+							}, false);
+						});
+
+						cont.appendChild(div);
+						if (folder) folderSearch(obj[key], indent + 1, cont);
+					}
+				}
+			}
+
+			filePane.addEventListener("dragover", (e) => {
+				e.preventDefault();
+			});
+
+			filePane.addEventListener("drop", (e) => {
+				e.preventDefault();
+
+				if (!dragData) return;
+				if (dragData.parent === files) return;
+
+				files[dragData.key] = dragData.parent[dragData.key];
+				delete dragData.parent[dragData.key];
+
+				dragData = null;
+				populateFilePane();
+			});
+
+			filePane.addEventListener("contextmenu", (e) => {e.preventDefault()});
+			document.addEventListener("click", () => rightClickFileMenu.style.display = "none");
+
+			function downloadFile(data, name) {
+				let blob;
+				if (data.startsWith('data:')) {
+					const [meta, content] = data.split(',');
+					const mime = meta.match(/:(.*?);/)[1];
+					const u8arr = new Uint8Array(atob(content).split('').map(c => c.charCodeAt(0)));
+					blob = new Blob([u8arr], { type: mime });
+				} else {
+					blob = new Blob([data], { type: 'text/plain' });
+				}
+				const a = document.createElement('a');
+				a.href = URL.createObjectURL(blob);
+				a.download = name;
+				a.click();
+				URL.revokeObjectURL(a.href);
+			}
+
+			function uploadFile(callback) {
+				const input = document.createElement('input');
+				input.type = 'file';
+				input.style.display = 'none';
+				input.onchange = () => {
+					const file = input.files[0];
+					if (!file) return;
+					const reader = new FileReader();
+					const isURL = file.type.startsWith('image/') || file.type.startsWith('audio/') || file.type.startsWith("data:video/");
+					reader.onload = () => {
+						input.remove();
+						callback(file.name, reader.result)
+					};
+					if (isURL) {
+						reader.readAsDataURL(file);
+					}else {
+						reader.readAsText(file);
+					}
+				};
+				document.body.appendChild(input);
+				input.click();
+			}
+
+			async function downloadZIP(contents, name) {
+				const zip = new JSZip();
+				async function search(obj, fld) {
+					for (const key in obj) {
+						if (typeof obj[key] === "object" && obj[key] !== null && !Array.isArray(obj[key]) && !(obj[key] instanceof HTMLElement)) { // is folder
+							await search(obj[key], fld.folder(key));
+						} else { // is file
+							if (typeof obj[key] === "string" && obj[key].startsWith("data:")) {
+								const [meta, content] = obj[key].split(',');
+								const mime = meta.match(/:(.*?);/)[1];
+								const u8arr = new Uint8Array(atob(content).split('').map(c => c.charCodeAt(0)));
+								fld.file(key, u8arr, { binary: true });
+							} else {
+								fld.file(key, obj[key]);
+							}
+						} 
+					}
+				}
+				await search(contents, zip);
+				async function generateAndDownload() {
+					const content = await zip.generateAsync({ type: "blob" });
+					const link = document.createElement("a");
+					link.href = URL.createObjectURL(content);
+					link.download = `${name}.zip`;
+					link.click();
+					URL.revokeObjectURL(link.href);
+				}
+				await generateAndDownload();
+			}
+
+			function organizeFiles(obj) {
+				if (obj === null || typeof obj !== "object" || Array.isArray(obj)) {
+					return obj;
+				}
+				const entries = Object.entries(obj);
+				const objectEntries = entries
+					.filter(([_, value]) => value && typeof value === "object" && !Array.isArray(value))
+					.sort(([a], [b]) => a.localeCompare(b));
+
+				const primitiveEntries = entries
+					.filter(([_, value]) => !(value && typeof value === "object" && !Array.isArray(value)))
+					.sort(([a], [b]) => a.localeCompare(b));
+
+				const sorted = {};
+				for (const [key, value] of objectEntries) {
+					sorted[key] = organizeFiles(value);
+				}
+				for (const [key, value] of primitiveEntries) {
+					sorted[key] = value;
+				}
+				return sorted;
+			}
+
+
+
+			function socketSendReply(signal, data, replyFunction) {
+				if (!(signal in window)) {
+					window[signal] = true;
+					socket.on(signal, (reply) => {
+						replyFunction(reply); 
+					})
+				}
+				socket.emit(signal, data);
+			}
+
+
+
+
+
+			function saveToCache(key, value) {
+				dbPromise.then(db => db.transaction("ch", "readwrite").objectStore("ch")
+					.put(value, key));
+			}
+
+			function loadFromCache(key) {
+				return dbPromise.then(db => new Promise(resolve => {
+					const req = db.transaction("ch").objectStore("ch").get(key);
+					req.onsuccess = () => {
+						const value = req.result ?? null;
+						resolve(value);
+					};
+				}));
+			}
+
+			function deleteFromCache(key) {
+				dbPromise.then(db => db.transaction("ch", "readwrite").objectStore("ch").delete(key));
+			}
+
+			function resetCache() {
+				dbPromise.then(db => {
+					db.close();
+					return new Promise(resolve => indexedDB.deleteDatabase("cacheDB").onsuccess = resolve);
+				});
+			}
+
+
+
+		</script>
+
+	</body>
+</html>
