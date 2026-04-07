@@ -1,42 +1,438 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title></title>
-  <style id="pageCSS"></style>
-</head>
-<body style="padding:0px; margin:0px;">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title></title>
+	</head>
 
-	<div id="pageHTML" style="position:relative;"></div>
-	
-	
+	<body style="margin:0px; padding:0px; width:100%; height:100dvh; position:relative;">
 
-	<script>
-	
-		let pages = {
-			"Home": {
-				"html": "<style>\n     #header {\n        width: 100%;\n        height: 140px;\n        display: flex;\n        flex-direction: column;\n        gap: 20px;\n        justify-content: center;\n        align-items: center;\n        background-color: #bbbbbb;\n    }\n\n    #header-title {\n        font-size: 42px;\n        cursor: pointer;\n    }\n\n    #header-menu {\n        display: flex;\n        flex-wrap: wrap;\n        justify-content: center;\n        gap: 40px;\n    }\n\n    #header-menu div {\n        font-size: 20px;\n        cursor: pointer;\n    }\n\n    #content {\n        width: 100%;\n        height: calc(100dvh - 140px);\n        display: flex;\n        flex-direction: column;\n        gap: 5px;\n    }\n</style>\n\n<div id=\"header\">\n    <div id=\"header-title\" onclick=\"showPage('Home')\">Harrison Site</div>\n    <div id=\"header-menu\">\n        <div page=\"Booking Page\">Booking Page</div>\n    </div>\n</div>\n\n\n\n\n\n<div id=\"content\">\n    <div id=\"pages-list\"></div>\n\n    <h1>HTML</h1>\n    <textarea editing=\"html\" wrap=\"off\"></textarea>\n\n    <h1>CSS</h1>\n    <textarea editing=\"css\" wrap=\"off\"></textarea>\n\n    <h1>JS</h1>\n    <textarea editing=\"js\" wrap=\"off\"></textarea>\n\n    <button onclick=\"navigator.clipboard.writeText(JSON.stringify(pages, null, 4)); alert('Copied')\">Export</button>\n</div>\n\n\n\n\n\n\n\n",
-				"css": "textarea {\n    width:calc(100% - 12px);\n    height:100%;\n    outline:none;\n    border:solid black 1px;\n    border-radius:4px;\n    resize:none;\n    padding:5px;\n    transition: all 0.5s ease-in-out;\n}\n\n\n\nh1 {\n    margin: 0px;\n}\n\n\n\n#pages-list {\n    width: calc(100% - 12px);\n    display: flex;\n    gap: 5px;\n    border: solid #000000 1px;\n    border-radius: 8xp;\n    cursor: pointer;\n    padding: 5px;\n    font-size: 20px;\n}\n\n#pages-list div {\n    height: calc(100% - 10px);\n    border-radius: 8px;\n    padding: 5px 20px;\n}\n\n#pages-list div:hover {\n    background-color: #cccccc;\n    transition: background-color 0.3s ease;\n}\n\n#content button {\n    padding: 10px;\n    font-size: 20px;\n    cursor: pointer;\n}\n\n\n\n\n\n\n\n",
-				"js": "\n\ndocument.querySelectorAll('textarea').forEach(elem => {\n    elem.value = pages['Home'][elem.getAttribute(\"editing\")];\n    elem.oninput = () => {pages['Home'][elem.getAttribute(\"editing\")] = elem.value};\n    elem.addEventListener(\"mousedown\", function(e) {\n        document.querySelectorAll('textarea').forEach(e => {e.style.height = \"100%\"});\n        elem.style.height = \"800%\";\n    })\n    elem.addEventListener(\"keydown\", function(e) {\n        if (e.key === \"Tab\") {\n            e.preventDefault();\n            const start = this.selectionStart;\n            const end = this.selectionEnd;\n            this.value = this.value.substring(0, start) + \"    \" + this.value.substring(end);\n            this.selectionStart = this.selectionEnd = start + 4;\n        }\n    })\n})\n\n\n\ndocument.querySelectorAll('#header-menu div').forEach((elem, index) => {\n    elem.onclick = function() {\n        console.log(elem.getAttribute('page'))\n        if (elem.getAttribute('page') in pages) showPage(elem.getAttribute('page'), document.getElementById('content'))\n    }\n})\n\n\n\nfor (const page in pages) {\n    const pageDiv = document.createElement(\"div\");\n    pageDiv.textContent = page;\n    pageDiv.onclick = function() {\n        document.querySelectorAll('textarea').forEach(elem => {\n            elem.value = pages[page][elem.getAttribute(\"editing\")];\n            elem.oninput = () => {pages[page][elem.getAttribute(\"editing\")] = elem.value};\n        });\n    }\n    document.getElementById(\"pages-list\").appendChild(pageDiv);\n}\n\n\n\n"
-			},
-			"Booking Page": {
-				"html": "<div id=\"booking\">\n    <div id=\"booking-calendar\">\n        <div id=\"booking-monthArea\"></div>\n        <div id=\"booking-dateArea\">\n            <div id=\"booking-daysOfWeek\">\n                <div>SUN</div>\n                <div>MON</div>\n                <div>TUE</div>\n                <div>WED</div>\n                <div>THU</div>\n                <div>FRI</div>\n                <div>SAT</div>\n            </div>\n            <div id=\"booking-datesRow0\">\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n            </div>\n            <div id=\"booking-datesRow1\">\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n            </div>\n            <div id=\"booking-datesRow2\">\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n            </div>\n            <div id=\"booking-datesRow3\">\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n            </div>\n            <div id=\"booking-datesRow4\">\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n            </div>\n            <div id=\"booking-datesRow5\">\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n                <div class=\"booking-cell\"></div>\n            </div>\n        </div>\n        <div id=\"booking-timeArea\"></div>\n    </div>\n</div>",
-				"css": "#booking {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: column;\n    align-items: center;\n    justify-content: center;\n    text-align: center;\n    overflow-y: auto;\n    scrollbar-width: none;\n}\n\n#booking * {\n    display: flex;\n    flex-direction: column;\n    justify-content: center;\n    align-items: center;\n    text-align: center;\n    color: #444444;\n    font-family: Tahoma, sans-serif;\n}\n\n\n#booking-calendar {\n    width: 600px;\n    max-width: calc(100% - 40px);\n    min-height: 200px;\n    border: solid #dddddd 2px;\n    border-radius: 8px;\n    gap: 2px;\n}\n\n#booking-monthArea {\n    width: calc(100% - 20px);\n    font-size: 38px;\n    padding: 10px;\n    align-items: start;\n}\n\n#booking-dateArea {\n    width: calc(100% - 8px);\n    height: 100%;\n    padding: 4px;\n}\n\n\n#booking-dateArea * {\n    width: 100%;\n    height: 100%;\n    font-size: 22px;\n    font-weight: 500;\n    flex-direction: row;\n}\n\n\n#booking-timeArea {\n    width: 100%;\n    min-height: 100px;\n    height: 100px;\n}\n\n.booking-cell {\n    width: 100%;\n    height: calc(100% - 8px) !important;\n    margin: 4px;\n    border-radius: 8px;\n    transition: background-color 0.3s ease;\n}\n\n.booking-cell-active {\n    background-color: #eeeeee;\n    cursor: pointer;\n}\n\n.booking-cell-active:hover {\n    background-color: #cccccc;\n}\n\n\n\n",
-				"js": "const MONTHS = [\"January\", \"February\", \"March\", \"April\", \"May\", \"June\", \"July\", \"August\", \"September\", \"October\", \"November\", \"December\"];\nconst DAYSOFWEEK = [\"Sunday\", \"Monday\", \"Tuesday\", \"Wednesday\", \"Thursday\", \"Friday\", \"Saturday\"];\nconst today = new Date();\n\nlet availability = [];\n\n\n\nconsole.log(today.getDate())\n\nshowMonth(today.getMonth(), today.getFullYear())\n\n\ngetAvailability()\n\nfunction getAvailability() {\n    fetch(\"https://automation.harrison-home.co.uk/webhook/Testing\", {\n        method: \"POST\",\n        body: JSON.stringify({ test: true })\n    })\n    .then(res => res.json())\n    .then(data => {\n        console.log(\"Response from n8n:\", data);\n    });\n}\n\n\n\nfunction showMonth(monthIndex, year) {\n    const firstDayOfWeek = new Date(year, monthIndex, 1).getDay();\n    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();\n    document.getElementById(\"booking-monthArea\").innerHTML = `${MONTHS[monthIndex]} ${year}`;\n\n    document.querySelectorAll('.booking-cell').forEach((elem, index) => {\n        if (index - firstDayOfWeek >= 0 && index - firstDayOfWeek < daysInMonth) {\n            elem.classList.add('booking-cell-active');\n            elem.innerHTML = `${index - firstDayOfWeek + 1}<br>•`;\n        }\n    })\n\n    console.log(DAYSOFWEEK[firstDayOfWeek])\n}"
+		<div id="site" style="width:100%; height:100%; display:flex; flex-direction:column;">
+			<div id="header" style="width:100%; display:flex; justify-content:center; align-items:center; text-align:center;"></div>
+			<div id="contents" style="width:100%; height:100%; display:flex;">
+				<div id="filePane" style="height:calc(100% - 10px); min-width:300px; width:300px; padding:5px; display:flex; flex-direction:column; background-color:#444444; overflow-y:auto; scrollbar-width:none;"></div>
+				<div id="outputPane" style="height:100%; width:100%; background-color:#222222; display:flex; justify-content:center; align-items:center; overflow:auto; scrollbar-color:#aaaaaa #222222;"></div>
+			</div>
+			<div id="footer" style="width:100%; display:flex; justify-content:center; align-items:center; text-align:center;"></div>
+		</div>
+
+		<div id="rightClickFileMenu" style="display:none; flex-direction:column; position:absolute; padding:5px; width:150px; background-color:#333333; border:solid #222222 1px; color:#eeeeee;"></div>
+
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="https://clarkeharrison.co.uk/zipGenerator.js"></script>
+		<script src="https://clarkeharrison.co.uk/qrCode.js"></script>
+		<script src="https://clarkeharrison.co.uk/kaplay.js"></script>
+
+		<script>
+			const filePane = document.getElementById("filePane");
+			const outputPane = document.getElementById("outputPane");
+			const rightClickFileMenu = document.getElementById("rightClickFileMenu");
+
+			let dragData = null;
+
+			let files = {
+				"Scripts": {
+					"Download Files.js": "downloadFile(JSON.stringify(files, null, 4), \"Files.json\");",
+					"Login.js": "outputPane.innerHTML = `\n    <div style=\"display:flex; flex-direction:column; background-color:#cccccc; border-radius:12px; padding:20px; gap:10px;\">\n        <input id=\"Username\" type=\"email\" placeholder=\"Username\" style=\"font-size:24px;\"></input>\n        <input id=\"Password\" type=\"password\" placeholder=\"Password\" style=\"font-size:24px;\"></input>\n        <input id=\"MFA\" type=\"text\" placeholder=\"MFA Code\" style=\"font-size:24px;\"></input>\n        <button id=\"LoginButton\" style=\"font-size:24px;\">Login</button>\n    </div>\n`;\n\n\nconst [username , password , mfa , loginButton] = [\"Username\" , \"Password\" , \"MFA\" , \"LoginButton\"].map(id => document.getElementById(id));\n\nloginButton.onclick = function() {\n    socketSendReply(\"verify\", {username : username.value , password : password.value , code : mfa.value}, function(reply) {\n        if (reply) {\n            outputPane.innerHTML = `<div style=\"font-size:32px; color:#ffffff;\">Logged In</div>`;\n        } else {\n            alert(\"Invalid Credentials, please try again.\")\n        }\n    });\n}",
+					"Upload Files.js": "uploadFile(function(fileName, fileData) {\n    if (!fileName.endsWith(\".json\")) return alert(\"You must upload a JSON file.\");\n    files = JSON.parse(fileData);\n    populateFilePane();\n})"
+				},
+				"Click Me.txt": "Here is the guide. Here are some changes!"
+			};
+
+            let socket;
+            let online = true;
+            try {
+                socket = io();
+                console.log("Connected to Server");
+            } catch {
+                online = false;
+                console.log("Server not found.");
+            }
+
+			const dbPromise = new Promise(resolve => {
+				const request = indexedDB.open("cacheDB", 1);
+				request.onupgradeneeded = () => request.result.createObjectStore("ch");
+				request.onsuccess = () => resolve(request.result);
+			});
+
+			loadFromCache("files").then((e) => {
+				if (e) files = e;
+				populateFilePane();
+				onRun(files)
+				function onRun(obj) {
+					if (obj === null || typeof obj !== 'object') return false;
+					if ('onRun.js' in obj) {
+						new Function(obj['onRun.js'])();
+						return true;
+					}
+					return Object.values(obj).some(value => onRun(value));
+				}
+			})
+
+			function populateFilePane() {
+				files = organizeFiles(files);
+				saveToCache("files", files);
+				filePane.innerHTML = "";
+				outputPane.innerHTML = "";
+
+				folderSearch(files, 0, filePane);
+
+				function folderSearch(obj, indent, parent) {
+					for (const key in obj) {
+						const folder = typeof obj[key] === "object";
+
+						let cont = document.createElement("div");
+						cont.style.cssText = `width:100%; display:${indent === 0 ? "flex" : "none"}; flex-direction:column;`;
+						parent.appendChild(cont);
+
+						let div = document.createElement("div");
+						div.style.cssText = `width:calc(100% - ${((indent * 20) + 5)}px - 15px); display:flex; border:solid #222222 1px; box-shadow:1px 1px 2px #111111; margin:5px ${(indent * 20) + 5}px; overflow-x:hidden; padding:4px; color:#ffffff; user-select:none; cursor:pointer;`;
+						div.innerHTML = `${folder ? "► " : ""}${key}`;
+						div.draggable = true;
+
+						// ===== DRAG START =====
+						div.addEventListener("dragstart", () => {
+							dragData = { parent: obj, key, div, draggingInFilePane: true };
+						});
+
+						// ===== DROP TARGET (folders only) =====
+						if (folder) {
+							div.addEventListener("dragover", (e) => {
+								e.preventDefault();
+								div.style.backgroundColor = "#333333";
+							});
+
+							div.addEventListener("dragleave", () => {
+								div.style.backgroundColor = "";
+							});
+
+							div.addEventListener("drop", (e) => {
+								e.preventDefault();
+								div.style.backgroundColor = "";
+
+								if (!dragData) return;
+								if (dragData.parent === obj[key]) return;
+								if (dragData.div == div) return;
+
+								obj[key][dragData.key] = dragData.parent[dragData.key];
+								delete dragData.parent[dragData.key];
+
+								dragData = null;
+								populateFilePane();
+							});
+						}
+
+						// ===== CLICK / OPEN =====
+						div.addEventListener("click", (e) => {
+							if (e.button !== 0) return; // only left mouse button
+							if (folder) {
+								for (let i = 1; i < cont.children.length; i++) {
+									cont.children[i].style.display =
+										cont.children[i].style.display === "flex" ? "none" : "flex";
+								}
+								div.innerHTML = div.innerHTML.startsWith("►")
+									? `▼ ${key}`
+									: `► ${key}`;
+							} else {
+								outputPane.innerHTML = "";
+								document.querySelectorAll("#filePane *").forEach((elem) => {
+									elem.style.backgroundColor = "rgba(0,0,0,0)";
+								})
+								div.style.backgroundColor = "#666666";
+								if (obj[key].startsWith("data:image/")) {
+									let img = document.createElement("img");
+									img.style.cssText = "width:calc(100% - 60px); height:calc(100% - 60px); padding:none; border:none; object-fit:contain; outline:none; image-rendering:pixelated;";
+									img.src = obj[key];
+									outputPane.appendChild(img);
+								} else if (obj[key].startsWith("data:audio/")) {
+								    const audio = document.createElement('audio');
+									audio.style.cssText = "width:calc(100% - 60px);";
+									audio.src = obj[key];
+									audio.controls = true;
+									outputPane.innerHTML = "";
+									outputPane.appendChild(audio);
+								} else if (obj[key].startsWith("data:audio/")) {
+									const video = document.createElement("video");
+									video.style.cssText = "width:calc(100% - 60px); height:calc(100% - 60px); padding:none; border:none; object-fit:contain; outline:none;";
+									video.src = obj[key];
+									video.controls = true;
+									video.width = 640;
+									video.height = 480;
+									outputPane.appendChild(video);
+								} else {
+									let txtArea = document.createElement("textarea");
+									txtArea.style.cssText = `width:calc(100% - 20px); height:calc(100% - 20px); padding:10px; border:none; outline:none; background-color:rgba(0,0,0,0); white-space:pre; resize:none; color:#ffffff; scrollbar-color:#aaaaaa #222222;`;
+									txtArea.value = obj[key];
+									txtArea.addEventListener("input", () => {
+										obj[key] = txtArea.value;
+										saveToCache("files", files);
+									});
+									outputPane.appendChild(txtArea);
+									txtArea.addEventListener('keydown', function(e) {
+										if (e.key === 'Tab') {
+											e.preventDefault();
+											const start = this.selectionStart;
+											const end = this.selectionEnd;
+											const spaces = '    ';
+											this.value = this.value.substring(0, start) + spaces + this.value.substring(end);
+											this.selectionStart = this.selectionEnd = start + spaces.length;
+										}
+									});
+								}
+							}
+						});
+
+						// ===== RIGHT CLICK =====
+						div.addEventListener("contextmenu", (e) => {
+							e.preventDefault()
+							rightClickFileMenu.style.display = "flex";
+							if (e.clientY > (window.innerHeight/2)) {
+								rightClickFileMenu.style.top = ``;
+								rightClickFileMenu.style.bottom = `${window.innerHeight - e.clientY}px`;
+							} else {
+								rightClickFileMenu.style.bottom = ``;
+								rightClickFileMenu.style.top = `${e.clientY}px`;
+							}
+							rightClickFileMenu.style.left = `${e.clientX}px`;
+							rightClickFileMenu.innerHTML = "";
+
+							function rightClickElem(name, onClick, lineUnder=true) {
+								let newElem = document.createElement("div")
+								newElem.style.cssText = `padding:4px 0px; ${lineUnder ? "border-bottom:solid #eeeeee 1px;" : ""} cursor:pointer;`;
+								newElem.innerHTML = name;
+								newElem.onclick = onClick;
+								rightClickFileMenu.appendChild(newElem);
+							}
+
+							if (key.endsWith(".js")) {
+								rightClickElem(`Run JS`, function() {
+									new Function(obj[key])();
+								})
+							}
+
+							if (key.endsWith(".html")) {
+								rightClickElem(`Show HTML`, function() {
+									outputPane.innerHTML = "";
+									const iframe = document.createElement("iframe")
+									const blob = new Blob([obj[key]], { type: 'text/html' });
+									iframe.style.cssText = "width:100%; height:100%; padding:0px; margin:0px; outline:none; border:none;";
+									iframe.src = URL.createObjectURL(blob);
+									outputPane.appendChild(iframe);
+								})
+							}
+
+							rightClickElem("Create File", function() {
+								const newName = prompt("Please enter the name of the file including it's extension.");
+								if (newName == "") return alert("Invalid file name.");
+								if (folder) {
+									if (newName in obj[key]) return alert("A file with that name already exists here.");
+									obj[key][newName] = "";
+								} else {
+									if (newName in obj) return alert("A file with that name already exists here.");
+									obj[newName] = "";
+								}
+								populateFilePane();
+							})
+
+							rightClickElem("Create Folder", function() {
+								const newName = prompt("Please enter the name of the folder.");
+								if (newName == "") return alert("Invalid file name.");
+								if (folder) {
+									if (newName in obj[key]) return alert("A folder with that name already exists here.");
+									obj[key][newName] = {};
+								} else {
+									if (newName in obj) return alert("A folder with that name already exists here.");
+									obj[newName] = {};
+								}
+								populateFilePane();
+							})
+
+							rightClickElem("Upload File", () => {
+								uploadFile(function(fileName, fileData) {
+									if (fileName in files) return alert("A folder with that name already exists here.");
+									files[fileName] = fileData;
+									populateFilePane();
+								})
+							});
+
+							rightClickElem(`Rename ${folder ? "Folder" : "File"}`, () => {
+								const newName = prompt(`Enter new name including extension if there was one.\n\nPrevious : ${key}`);
+								if (newName in obj) return alert("A file or folder with that name already exists here.");
+								obj[newName] = obj[key];
+								delete obj[key];
+								populateFilePane();
+							});
+
+							if (folder) {
+								rightClickElem("Download Folder", () => {
+									downloadZIP(obj[key], key);
+								});
+							} else {
+								rightClickElem("Download File", () => {
+									downloadFile(obj[key], key);
+								});
+							}
+
+							rightClickElem(`Delete ${folder ? "Folder" : "File"}`, function() {
+								if (Object.keys(files).length == 1) return alert("You cannot delete the last file/folder.");
+								if (prompt(`Enter 'YES' if you are sure that you want to delete ${key}.`) == "YES") delete obj[key];
+								populateFilePane();
+							}, false);
+						});
+
+						cont.appendChild(div);
+						if (folder) folderSearch(obj[key], indent + 1, cont);
+					}
+				}
 			}
-		}
-				
-		const pageHTML = document.getElementById("pageHTML");
-		const pageCSS = document.getElementById("pageCSS");
-	
-		function showPage(pageName, htmlParent=pageHTML, cssParent=pageCSS) {
-			if (pages[pageName].html) htmlParent.innerHTML = pages[pageName].html;
-			if (pages[pageName].css) cssParent.innerHTML = pages[pageName].css;
-			if (pages[pageName].js) new Function(pages[pageName].js)();
-		}
-	
-		showPage("Home");
-	
-	</script>
-</body>
+
+			filePane.addEventListener("dragover", (e) => {
+				e.preventDefault();
+			});
+
+			filePane.addEventListener("drop", (e) => {
+				e.preventDefault();
+
+				if (!dragData) return;
+				if (dragData.parent === files) return;
+
+				files[dragData.key] = dragData.parent[dragData.key];
+				delete dragData.parent[dragData.key];
+
+				dragData = null;
+				populateFilePane();
+			});
+
+			filePane.addEventListener("contextmenu", (e) => {e.preventDefault()});
+			document.addEventListener("click", () => rightClickFileMenu.style.display = "none");
+
+			function downloadFile(data, name) {
+				let blob;
+				if (data.startsWith('data:')) {
+					const [meta, content] = data.split(',');
+					const mime = meta.match(/:(.*?);/)[1];
+					const u8arr = new Uint8Array(atob(content).split('').map(c => c.charCodeAt(0)));
+					blob = new Blob([u8arr], { type: mime });
+				} else {
+					blob = new Blob([data], { type: 'text/plain' });
+				}
+				const a = document.createElement('a');
+				a.href = URL.createObjectURL(blob);
+				a.download = name;
+				a.click();
+				URL.revokeObjectURL(a.href);
+			}
+
+			function uploadFile(callback) {
+				const input = document.createElement('input');
+				input.type = 'file';
+				input.style.display = 'none';
+				input.onchange = () => {
+					const file = input.files[0];
+					if (!file) return;
+					const reader = new FileReader();
+					const isURL = file.type.startsWith('image/') || file.type.startsWith('audio/') || file.type.startsWith("data:video/");
+					reader.onload = () => {
+						input.remove();
+						callback(file.name, reader.result)
+					};
+					if (isURL) {
+						reader.readAsDataURL(file);
+					}else {
+						reader.readAsText(file);
+					}
+				};
+				document.body.appendChild(input);
+				input.click();
+			}
+
+			async function downloadZIP(contents, name) {
+				const zip = new JSZip();
+				async function search(obj, fld) {
+					for (const key in obj) {
+						if (typeof obj[key] === "object" && obj[key] !== null && !Array.isArray(obj[key]) && !(obj[key] instanceof HTMLElement)) { // is folder
+							await search(obj[key], fld.folder(key));
+						} else { // is file
+							if (typeof obj[key] === "string" && obj[key].startsWith("data:")) {
+								const [meta, content] = obj[key].split(',');
+								const mime = meta.match(/:(.*?);/)[1];
+								const u8arr = new Uint8Array(atob(content).split('').map(c => c.charCodeAt(0)));
+								fld.file(key, u8arr, { binary: true });
+							} else {
+								fld.file(key, obj[key]);
+							}
+						} 
+					}
+				}
+				await search(contents, zip);
+				async function generateAndDownload() {
+					const content = await zip.generateAsync({ type: "blob" });
+					const link = document.createElement("a");
+					link.href = URL.createObjectURL(content);
+					link.download = `${name}.zip`;
+					link.click();
+					URL.revokeObjectURL(link.href);
+				}
+				await generateAndDownload();
+			}
+
+			function organizeFiles(obj) {
+				if (obj === null || typeof obj !== "object" || Array.isArray(obj)) {
+					return obj;
+				}
+				const entries = Object.entries(obj);
+				const objectEntries = entries
+					.filter(([_, value]) => value && typeof value === "object" && !Array.isArray(value))
+					.sort(([a], [b]) => a.localeCompare(b));
+
+				const primitiveEntries = entries
+					.filter(([_, value]) => !(value && typeof value === "object" && !Array.isArray(value)))
+					.sort(([a], [b]) => a.localeCompare(b));
+
+				const sorted = {};
+				for (const [key, value] of objectEntries) {
+					sorted[key] = organizeFiles(value);
+				}
+				for (const [key, value] of primitiveEntries) {
+					sorted[key] = value;
+				}
+				return sorted;
+			}
+
+
+
+
+
+			function saveToCache(key, value) {
+				dbPromise.then(db => db.transaction("ch", "readwrite").objectStore("ch")
+					.put(value, key));
+			}
+
+			function loadFromCache(key) {
+				return dbPromise.then(db => new Promise(resolve => {
+					const req = db.transaction("ch").objectStore("ch").get(key);
+					req.onsuccess = () => {
+						const value = req.result ?? null;
+						resolve(value);
+					};
+				}));
+			}
+
+			function deleteFromCache(key) {
+				dbPromise.then(db => db.transaction("ch", "readwrite").objectStore("ch").delete(key));
+			}
+
+			function resetCache() {
+				dbPromise.then(db => {
+					db.close();
+					return new Promise(resolve => indexedDB.deleteDatabase("cacheDB").onsuccess = resolve);
+				});
+			}
+
+
+
+		</script>
+
+	</body>
 </html>
