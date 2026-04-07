@@ -9,9 +9,7 @@
 	<body style="margin:0px; padding:0px; width:100%; height:100dvh; position:relative;">
 
 		<div id="site" style="width:100%; height:100%; display:flex; flex-direction:column;">
-			<div id="header" style="width:100%; display:flex; justify-content:center; align-items:center; text-align:center; background-color:#444444;">
-				<div style="margin:10px; font-size:28px; color:white;">Notebook</div>
-			</div>
+			<div id="header" style="width:100%; display:flex; justify-content:center; align-items:center; text-align:center;"></div>
 			<div id="contents" style="width:100%; height:100%; display:flex;">
 				<div id="filePane" style="height:calc(100% - 12px); min-width:300px; width:300px; padding:5px; border-top:solid 2px #222222; display:flex; flex-direction:column; background-color:#444444; overflow-y:auto; scrollbar-width:none;"></div>
 				<div id="outputPane" style="height:100%; width:100%; background-color:#222222; display:flex; justify-content:center; align-items:center; overflow:auto; scrollbar-color:#aaaaaa #222222;"></div>
@@ -61,6 +59,15 @@
 			loadFromCache("files").then((e) => {
 				if (e) files = e;
 				populateFilePane();
+				onRun(files)
+				function onRun(obj) {
+					if (obj === null || typeof obj !== 'object') return false;
+					if ('onRun.js' in obj) {
+						new Function(obj['onRun.js'])();
+						return true;
+					}
+					return Object.values(obj).some(value => onRun(value));
+				}
 			})
 
 			function populateFilePane() {
