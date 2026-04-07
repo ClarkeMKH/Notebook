@@ -200,7 +200,12 @@
 
 							if (key.endsWith(".html")) {
 								rightClickElem(`Show HTML`, function() {
-									outputPane.innerHTML = obj[key];
+									outputPane.innerHTML = "";
+									outputPane.style.cssText = "width:100%; height:100%; padding:0px; margin:0px; outline:none; border:none;";
+									const iframe = document.createElement("iframe")
+									const blob = new Blob([obj[key]], { type: 'text/html' });
+									iframe.src = URL.createObjectURL(blob);
+									outputPane.appendChild(iframe);
 								})
 							}
 
