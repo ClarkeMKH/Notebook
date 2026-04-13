@@ -707,7 +707,7 @@
       setMessage(el.calendarMessage);
 
       try {
-        const response = await fetch('https://automation.harrison-home.co.uk/webhook/21c2c7da-c4ed-408d-a68d-e7a2c17b9777', {
+        const response = await fetch('https://automation.harrison-home.co.uk/webhook/1ec378a8-6581-4e57-a29f-f5e34f08f4a4', {
           method: 'POST',
           body: JSON.stringify({
             month: monthIndex + 1,
@@ -952,7 +952,7 @@
       showWaitingModal();
 
       try {
-        const response = await fetch('https://automation.harrison-home.co.uk/webhook/EmailVerification', {
+        const response = await fetch('https://automation.harrison-home.co.uk/webhook/21c2c7da-c4ed-408d-a68d-e7a2c17b9777', {
           method: 'POST',
           body: JSON.stringify({
             startDate,
