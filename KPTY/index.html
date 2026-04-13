@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Booking Page</title>
+  <style>
+    :root{
+      --bg:#f4f7fb;
+      --card:#fff;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --border:#dbe3ef;
+      --primary:#2563eb;
+      --primary-soft:#dbeafe;
+      --danger:#b91c1c;
+      --success:#16a34a;
+      --shadow:0 18px 40px rgba(15,23,42,.08);
+      --radius:18px;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:Arial,Helvetica,sans-serif;
+      background:linear-gradient(180deg,#eef4ff 0%,var(--bg) 100%);
+      color:var(--text);
+      min-height:100vh;
+      padding:32px 16px;
+    }
+
+    .container{max-width:920px;margin:0 auto}
+
+    .booking-card{
+      background:var(--card);
+      border:1px solid rgba(219,227,239,.9);
+      border-radius:24px;
+      box-shadow:var(--shadow);
+      padding:28px;
+    }
+
+    .field-group{margin-bottom:24px}
+
+    label{
+      display:block;
+      margin-bottom:10px;
+      font-size:14px;
+      font-weight:700;
+      color:#334155;
+    }
+
+    select,input,textarea,button{font:inherit}
+
+    input,textarea,.styled-select{
+      width:100%;
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:14px 16px;
+      background:#fff;
+      color:var(--text);
+      outline:none;
+      transition:border-color .2s, box-shadow .2s;
+    }
+
+    .styled-select{
+      appearance:none;
+      -webkit-appearance:none;
+      -moz-appearance:none;
+      cursor:pointer;
+      padding-right:48px;
+      background-image:
+        linear-gradient(45deg,transparent 50%,var(--primary) 50%),
+        linear-gradient(135deg,var(--primary) 50%,transparent 50%);
+      background-position:
+        calc(100% - 20px) calc(50% - 3px),
+        calc(100% - 14px) calc(50% - 3px);
+      background-size:6px 6px;
+      background-repeat:no-repeat;
+    }
+
+    input:focus,textarea:focus,.styled-select:focus{
+      border-color:var(--primary);
+      box-shadow:0 0 0 4px rgba(37,99,235,.12);
+    }
+
+    textarea{
+      min-height:120px;
+      resize:vertical;
+    }
+
+    .reveal-section{
+      opacity:0;
+      transform:translateY(14px);
+      max-height:0;
+      overflow:hidden;
+      pointer-events:none;
+      transition:opacity .35s, transform .35s, max-height .45s;
+    }
+
+    .reveal-section.visible{
+      opacity:1;
+      transform:translateY(0);
+      max-height:1600px;
+      pointer-events:auto;
+    }
+
+    .calendar-wrap{
+      margin-bottom:24px;
+      padding:18px;
+      background:#fbfdff;
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+    }
+
+    .calendar-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom:18px;
+    }
+
+    .calendar-title{
+      font-size:22px;
+      font-weight:700;
+      letter-spacing:.2px;
+    }
+
+    .calendar-nav{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .loading-text{
+      min-width:84px;
+      text-align:right;
+      font-size:13px;
+      font-weight:600;
+      color:var(--muted);
+    }
+
+    .nav-btn{
+      width:40px;
+      height:40px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:#fff;
+      color:var(--text);
+      font-size:18px;
+      font-weight:700;
+      cursor:pointer;
+      transition:transform .15s, background .2s, border-color .2s, opacity .2s;
+    }
+
+    .nav-btn:hover:not(:disabled){
+      background:var(--primary-soft);
+      border-color:#bfdbfe;
+      transform:translateY(-1px);
+    }
+
+    .nav-btn:disabled{
+      opacity:.55;
+      cursor:wait;
+    }
+
+    .days-row,.calendar-grid{
+      display:grid;
+      grid-template-columns:repeat(7,1fr);
+      gap:10px;
+    }
+
+    .days-row{margin-bottom:12px}
+
+    .day-name{
+      padding:8px 0;
+      text-align:center;
+      font-size:13px;
+      font-weight:700;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.06em;
+    }
+
+    .day-cell{
+      position:relative;
+      min-height:72px;
+      display:flex;
+      align-items:flex-start;
+      justify-content:flex-start;
+      padding:10px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      cursor:pointer;
+      transition:border-color .2s, background .2s, transform .15s, box-shadow .2s, color .2s, opacity .2s;
+    }
+
+    .day-cell:hover:not(.unavailable):not(:disabled){
+      border-color:#93c5fd;
+      background:#f8fbff;
+      transform:translateY(-1px);
+    }
+
+    .day-cell.other-month{
+      background:#f8fafc;
+      color:#64748b;
+    }
+
+    .day-cell.selected{
+      background:var(--primary-soft);
+      border-color:var(--primary);
+      box-shadow:inset 0 0 0 1px rgba(37,99,235,.08);
+    }
+
+    .day-cell.today::after{
+      content:"";
+      position:absolute;
+      right:10px;
+      bottom:10px;
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      background:var(--primary);
+    }
+
+    .day-cell.unavailable,
+    .day-cell:disabled{
+      background:#e5e7eb;
+      color:#9ca3af;
+      border-color:#d1d5db;
+      cursor:not-allowed;
+      opacity:.95;
+      transform:none;
+      box-shadow:none;
+    }
+
+    .day-number{
+      font-size:15px;
+      font-weight:700;
+    }
+
+    .selected-date,.calendar-message,.status-message{
+      min-height:20px;
+      margin-top:14px;
+      font-size:14px;
+      font-weight:600;
+      color:var(--muted);
+    }
+
+    .calendar-message.error,.status-message.error{color:var(--danger)}
+
+    .form-grid{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:18px;
+    }
+
+    .full-width{grid-column:1 / -1}
+
+    .submit-btn{
+      width:100%;
+      border:none;
+      border-radius:14px;
+      padding:15px 18px;
+      background:var(--primary);
+      color:#fff;
+      font-size:16px;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow:0 12px 24px rgba(37,99,235,.22);
+      transition:transform .15s, opacity .2s, box-shadow .2s;
+    }
+
+    .submit-btn:hover:not(:disabled){
+      transform:translateY(-1px);
+      opacity:.96;
+    }
+
+    .submit-btn:active:not(:disabled){transform:translateY(0)}
+
+    .submit-btn:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+      box-shadow:none;
+    }
+
+    .modal-overlay{
+      position:fixed;
+      inset:0;
+      z-index:9999;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      background:rgba(15,23,42,.55);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .25s;
+    }
+
+    .modal-overlay.visible{
+      opacity:1;
+      pointer-events:auto;
+    }
+
+    .modal-box{
+      width:min(560px,100%);
+      padding:34px 28px;
+      text-align:center;
+      background:#fff;
+      border:1px solid rgba(219,227,239,.9);
+      border-radius:26px;
+      box-shadow:0 24px 60px rgba(15,23,42,.25);
+    }
+
+    .modal-icon-wrap{
+      width:120px;
+      height:120px;
+      margin:0 auto 22px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .spinner-logo{
+      position:relative;
+      width:90px;
+      height:90px;
+      border:8px solid #dbeafe;
+      border-top-color:var(--primary);
+      border-radius:50%;
+      animation:spin 1s linear infinite;
+    }
+
+    .spinner-logo::after{
+      content:"";
+      position:absolute;
+      inset:18px;
+      border-radius:50%;
+      background:linear-gradient(135deg,#60a5fa,#2563eb);
+      opacity:.18;
+    }
+
+    .success-tick,.error-cross{
+      display:none;
+      align-items:center;
+      justify-content:center;
+      width:100px;
+      height:100px;
+      border-radius:50%;
+      font-size:56px;
+      font-weight:700;
+    }
+
+    .success-tick{
+      background:#dcfce7;
+      border:4px solid #86efac;
+      color:var(--success);
+    }
+
+    .error-cross{
+      background:#fee2e2;
+      border:4px solid #fca5a5;
+      color:var(--danger);
+    }
+
+    .modal-title{
+      margin:0 0 12px;
+      font-size:28px;
+      font-weight:800;
+      color:#0f172a;
+    }
+
+    .modal-text{
+      margin:0;
+      font-size:18px;
+      line-height:1.5;
+      color:#475569;
+    }
+
+    .modal-close{
+      display:none;
+      margin-top:24px;
+      border:none;
+      border-radius:14px;
+      padding:14px 20px;
+      background:var(--primary);
+      color:#fff;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    .modal-close.show{display:inline-block}
+
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    @media (max-width:700px){
+      .booking-card{padding:20px}
+      .form-grid{grid-template-columns:1fr}
+      .calendar-title{font-size:18px}
+      .days-row,.calendar-grid{gap:8px}
+      .day-cell{min-height:58px;padding:8px}
+      .modal-title{font-size:22px}
+      .modal-text{font-size:16px}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="booking-card">
+      <!-- Package selector -->
+      <div class="field-group">
+        <label for="bookingType">Select a package</label>
+        <select id="bookingType" class="styled-select">
+          <option value="">Choose a package</option>
+          <option value="Small Tent">Small Tent</option>
+          <option value="Large Tent">Large Tent</option>
+        </select>
+      </div>
+
+      <!-- Calendar -->
+      <div id="calendarSection" class="reveal-section">
+        <div class="calendar-wrap">
+          <div class="calendar-header">
+            <div id="calendarTitle" class="calendar-title">Month Year</div>
+            <div class="calendar-nav">
+              <div id="loadingText" class="loading-text"></div>
+              <button id="prevMonth" class="nav-btn" type="button" aria-label="Previous month">&#8592;</button>
+              <button id="nextMonth" class="nav-btn" type="button" aria-label="Next month">&#8594;</button>
+            </div>
+          </div>
+
+          <div id="daysRow" class="days-row"></div>
+          <div id="calendarGrid" class="calendar-grid"></div>
+          <div id="selectedDateText" class="selected-date">No dates selected</div>
+          <div id="calendarMessage" class="calendar-message"></div>
+        </div>
+      </div>
+
+      <!-- Booking form -->
+      <div id="formSection" class="reveal-section">
+        <form id="bookingForm">
+          <div class="form-grid">
+            <div>
+              <label for="name">Name</label>
+              <input id="name" name="name" type="text" placeholder="Enter your name" />
+            </div>
+
+            <div>
+              <label for="phone">Phone Number</label>
+              <input id="phone" name="phone" type="tel" placeholder="Enter your phone number" />
+            </div>
+
+            <div class="full-width">
+              <label for="email">Email</label>
+              <input id="email" name="email" type="email" placeholder="Enter your email" />
+            </div>
+
+            <div class="full-width">
+              <label for="notes">Notes</label>
+              <textarea id="notes" name="notes" placeholder="If you need the tent put up or taken down at specific times, please write it here."></textarea>
+            </div>
+
+            <div class="full-width">
+              <button id="submitBtn" class="submit-btn" type="submit" disabled>Submit</button>
+              <div id="statusMessage" class="status-message"></div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status modal -->
+  <div id="statusModal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-box">
+      <div class="modal-icon-wrap">
+        <div id="spinnerLogo" class="spinner-logo"></div>
+        <div id="successTick" class="success-tick">✓</div>
+        <div id="errorCross" class="error-cross">✕</div>
+      </div>
+      <h2 id="modalTitle" class="modal-title">Please check your email</h2>
+      <p id="modalText" class="modal-text">
+        We have sent you an email. Please click the button in the email to confirm the booking.
+      </p>
+      <button id="modalClose" class="modal-close" type="button">Close</button>
+    </div>
+  </div>
+
+  <script>
+    // ---------- Elements ----------
+    const $ = (id) => document.getElementById(id);
+
+    const el = {
+      bookingType: $('bookingType'),
+      calendarSection: $('calendarSection'),
+      formSection: $('formSection'),
+      calendarTitle: $('calendarTitle'),
+      calendarGrid: $('calendarGrid'),
+      daysRow: $('daysRow'),
+      selectedDateText: $('selectedDateText'),
+      calendarMessage: $('calendarMessage'),
+      loadingText: $('loadingText'),
+      prevMonthBtn: $('prevMonth'),
+      nextMonthBtn: $('nextMonth'),
+      bookingForm: $('bookingForm'),
+      statusMessage: $('statusMessage'),
+      submitBtn: $('submitBtn'),
+      nameInput: $('name'),
+      emailInput: $('email'),
+      phoneInput: $('phone'),
+      notesInput: $('notes'),
+      statusModal: $('statusModal'),
+      spinnerLogo: $('spinnerLogo'),
+      successTick: $('successTick'),
+      errorCross: $('errorCross'),
+      modalTitle: $('modalTitle'),
+      modalText: $('modalText'),
+      modalClose: $('modalClose')
+    };
+
+    // ---------- Constants ----------
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    // ---------- State ----------
+    let currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    let selectedDates = [];                 // Array of YYYY-MM-DD strings
+    let selectionAnchorDate = null;         // First clicked date when building a range
+    let unavailableDateKeys = new Set();    // YYYY-MM-DD strings from API
+    let loadedAvailability = new Map();     // Cache loaded months
+    let isLoading = false;
+
+    // ---------- Helpers ----------
+    const show = (section) => section.classList.add('visible');
+    const hide = (section) => section.classList.remove('visible');
+
+    function setMessage(element, text = '', isError = false) {
+      element.textContent = text;
+      element.classList.toggle('error', isError);
+    }
+
+    function formatDateKey(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function parseDateKey(dateKey) {
+      const [y, m, d] = dateKey.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function getMonthKey(year, monthIndex) {
+      return `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
+    }
+
+    function addDays(date, amount) {
+      const copy = new Date(date);
+      copy.setDate(copy.getDate() + amount);
+      return copy;
+    }
+
+    function isSameDate(a, b) {
+      return !!a && !!b &&
+        a.getFullYear() === b.getFullYear() &&
+        a.getMonth() === b.getMonth() &&
+        a.getDate() === b.getDate();
+    }
+
+    function isPastDate(date) {
+      return date < todayStart;
+    }
+
+    function isDateUnavailable(date) {
+      return isPastDate(date) || unavailableDateKeys.has(formatDateKey(date));
+    }
+
+    function isDateSelected(date) {
+      return selectedDates.includes(formatDateKey(date));
+    }
+
+    function getSelectedRange() {
+      if (!selectedDates.length) return { startDate: '', endDate: '' };
+      const sorted = [...selectedDates].sort();
+      return { startDate: sorted[0], endDate: sorted[sorted.length - 1] };
+    }
+
+    function updateSubmitState() {
+      const canSubmit =
+        selectedDates.length > 0 &&
+        el.nameInput.value.trim() &&
+        el.emailInput.value.trim();
+
+      el.submitBtn.disabled = !canSubmit;
+    }
+
+    function setLoadingState(loading) {
+      isLoading = loading;
+      el.loadingText.textContent = loading ? 'Loading...' : '';
+      el.prevMonthBtn.disabled = loading;
+      el.nextMonthBtn.disabled = loading;
+    }
+
+    function resetStatus() {
+      setMessage(el.statusMessage);
+      setMessage(el.calendarMessage);
+    }
+
+    function resetSelection() {
+      selectedDates = [];
+      selectionAnchorDate = null;
+      hide(el.formSection);
+      resetStatus();
+      updateSelectedDateText();
+      updateSubmitState();
+    }
+
+    function updateSelectedDateText() {
+      if (!selectedDates.length) {
+        el.selectedDateText.textContent = 'No dates selected';
+        return;
+      }
+
+      const { startDate, endDate } = getSelectedRange();
+
+      if (startDate === endDate) {
+        const date = parseDateKey(startDate);
+        el.selectedDateText.textContent = `Selected date: ${date.toLocaleDateString(undefined, {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })}`;
+        return;
+      }
+
+      const start = parseDateKey(startDate);
+      const end = parseDateKey(endDate);
+
+      el.selectedDateText.textContent = `Selected dates: ${start.toLocaleDateString(undefined, {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      })} to ${end.toLocaleDateString(undefined, {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      })}`;
+    }
+
+    // ---------- Modal ----------
+    function showWaitingModal() {
+      el.spinnerLogo.style.display = 'block';
+      el.successTick.style.display = 'none';
+      el.errorCross.style.display = 'none';
+      el.modalClose.classList.remove('show');
+
+      el.modalTitle.textContent = 'Please check your email';
+      el.modalText.textContent = 'We have sent you an email. Please click the button in the email to confirm the booking.';
+      el.statusModal.classList.add('visible');
+      el.statusModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function showSuccessModal() {
+      el.spinnerLogo.style.display = 'none';
+      el.successTick.style.display = 'flex';
+      el.errorCross.style.display = 'none';
+      el.modalClose.classList.add('show');
+
+      el.modalTitle.textContent = 'Booking confirmed';
+      el.modalText.textContent = 'Email confirmed and booking submitted.';
+    }
+
+    function showErrorModal(message) {
+      el.spinnerLogo.style.display = 'none';
+      el.successTick.style.display = 'none';
+      el.errorCross.style.display = 'flex';
+      el.modalClose.classList.add('show');
+
+      el.modalTitle.textContent = 'Something went wrong';
+      el.modalText.textContent = message || 'We could not complete your booking. Please try again.';
+    }
+
+    function hideModal() {
+      el.statusModal.classList.remove('visible');
+      el.statusModal.setAttribute('aria-hidden', 'true');
+    }
+
+    // ---------- Availability ----------
+    async function fetchMonthAvailability(year, monthIndex) {
+      if (!el.bookingType.value) return;
+
+      const monthKey = getMonthKey(year, monthIndex);
+      if (loadedAvailability.has(monthKey)) return;
+
+      setLoadingState(true);
+      setMessage(el.calendarMessage);
+
+      try {
+        const response = await fetch('https://automation.harrison-home.co.uk/webhook/21c2c7da-c4ed-408d-a68d-e7a2c17b9777', {
+          method: 'POST',
+          body: JSON.stringify({
+            month: monthIndex + 1,
+            year,
+            package: el.bookingType.value
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        // Expected format:
+        // unavailableDays: ["2026-04-29", "2026-04-30", "2026-05-01"]
+        const unavailableArray = Array.isArray(result.unavailableDays) ? result.unavailableDays : [];
+
+        unavailableArray
+          .filter((dateStr) => typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr))
+          .forEach((dateStr) => unavailableDateKeys.add(dateStr));
+
+        loadedAvailability.set(monthKey, true);
+      } catch (error) {
+        console.error('Availability fetch error:', error);
+        setMessage(el.calendarMessage, 'Could not load availability for this month.', true);
+      } finally {
+        setLoadingState(false);
+      }
+    }
+
+    // Load every month touched by a selected range
+    async function ensureRangeAvailabilityLoaded(startDate, endDate) {
+      const start = startDate <= endDate ? startDate : endDate;
+      const end = startDate <= endDate ? endDate : startDate;
+
+      let pointer = new Date(start.getFullYear(), start.getMonth(), 1);
+      const endMonth = new Date(end.getFullYear(), end.getMonth(), 1);
+
+      while (pointer <= endMonth) {
+        await fetchMonthAvailability(pointer.getFullYear(), pointer.getMonth());
+        pointer = new Date(pointer.getFullYear(), pointer.getMonth() + 1, 1);
+      }
+    }
+
+    // Returns selected range if every date is available, otherwise null
+    function getAvailableRange(startDate, endDate) {
+      const start = startDate <= endDate ? startDate : endDate;
+      const end = startDate <= endDate ? endDate : startDate;
+      const range = [];
+
+      let pointer = new Date(start);
+      while (pointer <= end) {
+        if (isDateUnavailable(pointer)) return null;
+        range.push(formatDateKey(pointer));
+        pointer = addDays(pointer, 1);
+      }
+
+      return range;
+    }
+
+    // ---------- Calendar ----------
+    async function loadVisibleMonthsAvailability() {
+      await fetchMonthAvailability(currentMonth.getFullYear(), currentMonth.getMonth());
+      const nextMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+      await fetchMonthAvailability(nextMonth.getFullYear(), nextMonth.getMonth());
+    }
+
+    function renderDayNames() {
+      el.daysRow.innerHTML = '';
+      dayNames.forEach((day) => {
+        const item = document.createElement('div');
+        item.className = 'day-name';
+        item.textContent = day;
+        el.daysRow.appendChild(item);
+      });
+    }
+
+    function buildCellDate(index, firstDayIndex, daysInMonth) {
+      if (index < firstDayIndex) {
+        const prevMonthLastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 0).getDate();
+        const dayNumber = prevMonthLastDay - firstDayIndex + index + 1;
+        return {
+          date: new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, dayNumber),
+          otherMonth: true,
+          disabled: true
+        };
+      }
+
+      if (index >= firstDayIndex + daysInMonth) {
+        const dayNumber = index - (firstDayIndex + daysInMonth) + 1;
+        return {
+          date: new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, dayNumber),
+          otherMonth: true,
+          disabled: false
+        };
+      }
+
+      return {
+        date: new Date(currentMonth.getFullYear(), currentMonth.getMonth(), index - firstDayIndex + 1),
+        otherMonth: false,
+        disabled: false
+      };
+    }
+
+    async function handleDateSelection(clickedDate) {
+      const clickedKey = formatDateKey(clickedDate);
+      const alreadySelected = selectedDates.includes(clickedKey);
+
+      // Clicking a selected date removes it
+      if (alreadySelected) {
+        selectedDates = selectedDates.filter((key) => key !== clickedKey).sort();
+        selectionAnchorDate = selectedDates.length ? parseDateKey(selectedDates[0]) : null;
+        return;
+      }
+
+      // First click starts a range
+      if (!selectedDates.length || !selectionAnchorDate) {
+        selectedDates = [clickedKey];
+        selectionAnchorDate = new Date(clickedDate);
+        return;
+      }
+
+      // Second click tries to build a continuous available range
+      await ensureRangeAvailabilityLoaded(selectionAnchorDate, clickedDate);
+      const range = getAvailableRange(selectionAnchorDate, clickedDate);
+
+      if (!range) {
+        setMessage(el.calendarMessage, 'You can only select a continuous run of available dates.', true);
+        return;
+      }
+
+      selectedDates = range;
+    }
+
+    async function renderCalendar() {
+      el.calendarGrid.innerHTML = '';
+      el.calendarTitle.textContent = `${monthNames[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
+
+      const firstDayIndex = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
+      const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
+
+      for (let i = 0; i < 42; i++) {
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = 'day-cell';
+
+        const { date, otherMonth, disabled } = buildCellDate(i, firstDayIndex, daysInMonth);
+
+        if (otherMonth) cell.classList.add('other-month');
+        if (isSameDate(date, todayStart)) cell.classList.add('today');
+        if (disabled || isDateUnavailable(date)) {
+          cell.classList.add('unavailable');
+          cell.disabled = true;
+        }
+        if (isDateSelected(date)) cell.classList.add('selected');
+
+        const number = document.createElement('span');
+        number.className = 'day-number';
+        number.textContent = date.getDate();
+        cell.appendChild(number);
+
+        if (!cell.disabled) {
+          cell.addEventListener('click', async () => {
+            setMessage(el.calendarMessage);
+            await handleDateSelection(date);
+            updateSelectedDateText();
+
+            if (selectedDates.length) show(el.formSection);
+            else hide(el.formSection);
+
+            setMessage(el.statusMessage);
+            updateSubmitState();
+            renderCalendar();
+          });
+        }
+
+        el.calendarGrid.appendChild(cell);
+      }
+    }
+
+    async function loadCalendar() {
+      resetStatus();
+      await loadVisibleMonthsAvailability();
+      await renderCalendar();
+      updateSelectedDateText();
+      updateSubmitState();
+    }
+
+    // ---------- Events ----------
+    el.modalClose.addEventListener('click', hideModal);
+
+    el.bookingType.addEventListener('change', async () => {
+      if (!el.bookingType.value) {
+        hide(el.calendarSection);
+        hide(el.formSection);
+        unavailableDateKeys = new Set();
+        loadedAvailability = new Map();
+        resetSelection();
+        return;
+      }
+
+      unavailableDateKeys = new Set();
+      loadedAvailability = new Map();
+      resetSelection();
+      show(el.calendarSection);
+      await loadCalendar();
+    });
+
+    el.prevMonthBtn.addEventListener('click', async () => {
+      if (isLoading) return;
+      currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
+      await loadCalendar();
+    });
+
+    el.nextMonthBtn.addEventListener('click', async () => {
+      if (isLoading) return;
+      currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+      await loadCalendar();
+    });
+
+    [el.nameInput, el.emailInput].forEach((input) => {
+      input.addEventListener('input', updateSubmitState);
+    });
+
+    el.bookingForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const name = el.nameInput.value.trim();
+      const email = el.emailInput.value.trim();
+
+      if (!selectedDates.length || !name || !email) {
+        setMessage(el.statusMessage, 'Select at least one date and fill in your name and email.', true);
+        updateSubmitState();
+        return;
+      }
+
+      const { startDate, endDate } = getSelectedRange();
+
+      setMessage(el.statusMessage);
+      el.submitBtn.disabled = true;
+      showWaitingModal();
+
+      try {
+        const response = await fetch('https://automation.harrison-home.co.uk/webhook/EmailVerification', {
+          method: 'POST',
+          body: JSON.stringify({
+            startDate,
+            endDate,
+            package: el.bookingType.value,
+            name,
+            phone: el.phoneInput.value.trim(),
+            email,
+            notes: el.notesInput.value.trim()
+          })
+        });
+
+        const rawText = await response.text();
+        let result = null;
+
+        try {
+          result = rawText ? JSON.parse(rawText) : null;
+        } catch {
+          result = rawText;
+        }
+
+        if (!response.ok) {
+          console.error('Booking submit failed:', response.status, result);
+          throw new Error(`Server returned ${response.status}`);
+        }
+
+        showSuccessModal();
+        setMessage(el.statusMessage, 'Booking submitted successfully.');
+      } catch (error) {
+        console.error('Submit error:', error);
+        showErrorModal('The booking request failed. The server returned an error. Please try again or contact support.');
+        setMessage(el.statusMessage, 'Booking failed to submit.', true);
+      } finally {
+        updateSubmitState();
+      }
+    });
+
+    // ---------- Initial render ----------
+    renderDayNames();
+    renderCalendar();
+    updateSubmitState();
+  </script>
+</body>
+</html>
