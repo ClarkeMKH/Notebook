@@ -207,7 +207,7 @@
 							}
 
 							if (key.endsWith(".js")) {
-								rightClickElem(`Run JS`, function() {
+								rightClickElem(`Run JS`, async function() {
 									new Function(obj[key])();
 								})
 							}
