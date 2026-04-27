@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="description" content="My Website">
+		<meta name="author" content="Clarke Harrison">
+
+		<title>CH</title>
+
+		<!-- Favicon -->
+		<link rel="icon" href="favicon.ico" type="image/x-icon">
+
+		<!-- CSS -->
+		<style id="customCSS"></style>
+	</head>
+	<body style="width:100%; height:100dvh; margin:0px; padding:0px; overflow:hidden;">
+
+		<div id="customHTML" style="width:100%; height:100%;"></div>
+
+		<script>
+			const customCSS = document.getElementById("customCSS");
+			const customHTML = document.getElementById("customHTML");
+			let scripts = {
+				"init": "window.dbPromise = new Promise(resolve => {\n    const request = indexedDB.open(\"cacheDB\", 1);\n    request.onupgradeneeded = () => request.result.createObjectStore(\"ch\");\n    request.onsuccess = () => resolve(request.result);\n});\n\n\n\nwindow.saveToCache = function(key, value) {\n    dbPromise.then(db => db.transaction(\"ch\", \"readwrite\").objectStore(\"ch\").put(value, key));\n}\n\nwindow.loadFromCache = function(key) {\n    return dbPromise.then(db => new Promise(resolve => {\n        const req = db.transaction(\"ch\").objectStore(\"ch\").get(key);\n        req.onsuccess = () => {\n            const value = req.result ?? null;\n            resolve(value);\n        };\n    }));\n}\n\nwindow.deleteFromCache = function(key) {\n    dbPromise.then(db => db.transaction(\"ch\", \"readwrite\").objectStore(\"ch\").delete(key));\n}\n\nwindow.resetCache = function() {\n    dbPromise.then(db => {\n        db.close();\n        return new Promise(resolve => indexedDB.deleteDatabase(\"cacheDB\").onsuccess = resolve);\n    });\n}\n\nloadFromCache(\"scripts\").then((e) => {if (e) scripts = e;\nnew Function(scripts['Home'])()})",
+				"Home": "customCSS.innerHTML = `\n    div {\n        display: flex;\n        flex-direction: column;\n        justify-content: center;\n        align-items: center;\n        width: 100%;\n    }\n\n    textarea {\n        width:calc(100% - 12px);\n        height:calc(100% - 42px);\n        padding:5px;\n        border:solid 1px #111111;\n        border-radius:8px;\n        outline:none;\n        resize:none;\n        background-color:#eeeeee;\n        scrollbar-width: none;\n        \n    }\n\n    #header {\n        justify-content: space-around;\n    }\n\n    #optionsButton {\n        position: fixed;\n        top: 5px;\n        right: 5px;\n        width: 30px;\n        height: 30px;\n        border: solid #111111 1px;\n        border-radius: 8px;\n        background-color: #eeeeee;\n        cursor: pointer;\n        box-shadow: 1px 1px 2px #111111;\n    }\n\n    #title {\n        font-size: 42px;\n    }\n\n    #subMenu {\n        flex-direction: row;\n        gap: 20px;\n    }\n\n    #subMenu div {\n        border: solid 1px #111111;\n        border-radius: 8px;\n        cursor: pointer;\n        padding: 5px 20px;\n        box-shadow: 1px 1px 2px #111111;\n        width: auto;\n    }\n\n    #contentArea {\n        gap: 5px;\n    }\n`;\n\n\n\n\n\ncustomHTML.innerHTML = `\n    <div style=\"height:100%; width:100%;\">\n        <div id=\"header\" style=\"height:15%;\">\n            <div id=\"optionsButton\">E</div>\n            <div id=\"title\">Notepad</div>\n            <div id=\"subMenu\"></div>\n        </div>\n        <div id=\"contentArea\" style=\"height: 100%;\">\n            <textarea id=\"editArea\" wrap=\"off\"></textarea>\n            <button id=\"saveButton\">Save</button>\n        </div>\n    </div>\n`;\n\n\n\n\n\n\n\nconst editArea = document.getElementById(\"editArea\");\nconst saveButton = document.getElementById(\"saveButton\");\n\n\neditArea.addEventListener('keydown', function(e) {\n    if (e.key === 'Tab') {\n        e.preventDefault();\n        const start = this.selectionStart;\n        const end = this.selectionEnd;\n        const spaces = '    ';\n        this.value = this.value.substring(0, start) + spaces + this.value.substring(end);\n        this.selectionStart = this.selectionEnd = start + spaces.length;\n    }\n});\n\nfor (const script in scripts) {\n    if (script == \"init\" || script == \"Home\" || script == \"Notes\") continue;\n    const div = document.createElement(\"div\");\n    div.innerHTML = script;\n    div.onclick = new Function(scripts[script]);\n    document.getElementById(\"subMenu\").appendChild(div);\n}\n\n\ndocument.getElementById(\"optionsButton\").onclick = function() {\n    editArea.value = scripts['Home'];\n\n    saveButton.onclick = function() {\n        alert(\"Saved\");\n        scripts['Home'] = editArea.value;\n        saveToCache(\"scripts\", scripts);\n        navigator.clipboard.writeText(JSON.stringify(scripts, null, 4));\n    }\n}\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+			}
+			function runScript(key) {
+				new Function(scripts[key])();
+			}
+			runScript("init");
+		</script>
+	</body>
+</html>
+
+
