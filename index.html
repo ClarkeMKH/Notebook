@@ -75,7 +75,8 @@
 					if (e) scripts = e;
 					new Function(scripts['Home'])();
 				} catch {
-					alert("! Error !\n\nUsing Default Scripts");
+					alert("! Error !\n\nUsing Default Scripts with broken scripts object accessible via : brokenScripts");
+					window.brokenScripts = e;
 					scripts = defaultScripts;
 					new Function(scripts['Home'])();
 				}
