@@ -40,8 +40,8 @@
 			const defaultScripts = JSON.parse(JSON.stringify(scripts));
 			
 			
-			function runScript(key) {
-				(async Function(scripts[key]))();
+			async function runScript(key) {
+				new Function(scripts[key])();
 			}
 			
 			const dbPromise = new Promise(resolve => {
