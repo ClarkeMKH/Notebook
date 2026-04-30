@@ -41,7 +41,7 @@
 			
 			
 			function runScript(key) {
-				new  async Function(scripts[key])();
+				(async Function(scripts[key]))();
 			}
 			
 			const dbPromise = new Promise(resolve => {
