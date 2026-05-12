@@ -87,12 +87,12 @@
 			loadFromCache("scripts").then((e) => {
 				try {
 					if (e) scripts = e;
-					new Function(scripts['Home'])();
+					runScript('Home');
 				} catch {
 					alert("! Error !\n\nUsing Default Scripts with broken scripts object accessible via : brokenScripts");
 					window.brokenScripts = e;
 					scripts = defaultScripts;
-					new Function(scripts['Home'])();
+					runScript('Home');
 				}
 			})
 		</script>
