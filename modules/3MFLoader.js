@@ -19,7 +19,7 @@ import {
 	TextureLoader,
 	SRGBColorSpace
 } from './three.js';
-import { unzipSync } from '../libs/fflate.module.js';
+import { unzipSync } from './fflate.module.js';
 
 const COLOR_SPACE_3MF = SRGBColorSpace;
 
