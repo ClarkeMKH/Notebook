@@ -1,1 +1,26 @@
-µë-
+Docker :
+
+    - Caddy
+    - Home Assistant
+    - Ollama
+    - Open WebUI (Talking to Ollama and Open Router)
+    - Jellyfin
+    - Nextcloud
+    - Minecraft Server
+    - NTFY
+
+Home Assistant Cards :
+
+    - Webpage -> Open WebUI (Local)
+    - Hive
+    - Jellyfin
+    - Minecraft server ?
+    - Nextcloud
+    - NTFY
+
+Devices I need
+
+    - UPS -> EcoFlow RIVER 3 Portable Power Station (Â£170)
+    - Hive -> Â£150
+    - 2 x USB to SATA
+    - 2 x 2.5" SSD's
