@@ -3,7 +3,6 @@ Docker :
     - Caddy
     - Home Assistant
     - Ollama
-    - Open WebUI (Talking to Ollama and Open Router)
     - Jellyfin
     - Nextcloud
     - Minecraft Server
@@ -11,12 +10,14 @@ Docker :
 
 Home Assistant Cards :
 
-    - Webpage -> Open WebUI (Local)
     - Hive
     - Jellyfin
     - Minecraft server ?
     - Nextcloud
     - NTFY
+    - Open Router
+    - Roku
+    - Waze Travel Time
 
 Devices I need
 
