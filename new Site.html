@@ -24,13 +24,17 @@
 			
 			const script = `
 				# Room 1
-					Hi
+					Hi Going to [[Room 2]](Room 3).
 					{
 						console.log("Test 1");
 						console.log("Test 2");
 					}
 					
+					
 					Mate
+					
+					
+					
 				
 				# Room 2
 					Test
@@ -39,8 +43,11 @@
 			
 			let areas = areasOfScript();
 			
+			window.vars = {};
+			
 			showArea(Object.keys(areas)[0]);
 			
+			console.log(areas)
 			
 			
 			function areasOfScript(){
@@ -54,23 +61,54 @@
 						if (section) obj[section].push(line);
 					}
 				});
+				
+				for (const section in obj) {
+				  for (let i=obj[section].length-1; i>=0; i--) {
+				    if (obj[section][i].trim() === "") {
+				      obj[section].splice(i, 1);
+				    } else {
+				      break;
+				    }
+				  }
+				}
 				return obj;
 			}
 			
 			
 			
 			function showArea(area) {
-				if (!areas[area]) return console.log(`Invalid Area : ${area}`)
+				if (!areas[area] || area.includes('?')) return console.log(`Invalid Area : ${area}.\n\nIt either does not exist or contains a '?'.`)
 				let HTML = ``;
 				let checkingJS = false;
 				let JS = ``;
 				areas[area].forEach((line, index) => {
-					if (line.startsWith('{') || line.startsWith('}')) return checkingJS = line.startsWith('{');
+					if (line.includes('{{')) {
+					  if (line.includes('}}')) JS = line.trim().slice(2, -2);
+					  return checkingJS = !line.includes('}}');
+					}
+					if (line.includes('}}')) return checkingJS = false;
 					if (line == "\n") line = "<br>"
 					if (checkingJS) {
 						JS += line;
 					} else {
-						HTML += line + '<br>';
+					
+            const ammendedLine = line.replace(/\[\[([^\]]+)\]\](?:\(([^)]*)\))?/g, (match, sb, cb) => {
+              const tag = "";
+              let txtToShow = "";
+              
+              if (cb) {
+                if (cb.includes('?')) cb = eval(cb);
+              }
+              
+              if (sb.includes('?')) {
+                
+              } else {
+                tag = `<a href="#" onclick="showArea('${sb}'); return false;">${cb}</a>`;
+              }
+              return sb;
+            });
+					  
+						HTML += ammendedLine + '<br>';
 					}
 				});
 				if (JS) new Function(JS)();
@@ -78,13 +116,10 @@
 			}
 			
 			
-			
-			
 			/*
 				TO DO
-				
-				- have it so that the last \n lines from an area are removed for consistency.
-				- Add [[]] checking and [[]]() for lines in showArea.
+	
+				- Add [[]] checking and [[]]() allowing you to show other Areas and using () ? v1 : v2 logic.
 			*/
 			
 		</script>
