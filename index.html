@@ -211,7 +211,7 @@
 				}
 			}
 
-			async function showFileMenu(e, obj, key, folder, div) {
+			function showFileMenu(e, obj, key, folder, div) {
 				if (e?.preventDefault) e.preventDefault();
 
 				const clientX = e.clientX ?? 0;
@@ -249,7 +249,7 @@
 				}
 
 				if (key.endsWith(".js")) {
-					rightClickElem(`Run JS`, function() {
+					rightClickElem(`Run JS`, async function() {
 						const AsyncFunction = async function () {}.constructor;
 						await new AsyncFunction(obj[key])();
 					});
