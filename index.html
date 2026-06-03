@@ -80,19 +80,19 @@
 				request.onsuccess = () => resolve(request.result);
 			});
 
-			loadFromCache("files").then((e) => {
-				if (e) files = e;
-				populateFilePane();
-				onRun(files);
-				function onRun(obj) {
-					if (obj === null || typeof obj !== 'object') return false;
-					if ('onRun.js' in obj) {
-						new Function(obj['onRun.js'])();
-						return true;
-					}
-					return Object.values(obj).some(value => onRun(value));
-				}
-			});
+			loadFromCache("files")
+			    .then(e => { if (e) files = e; })
+			    .catch(console.warn)
+			    .finally(() => {
+			        populateFilePane();
+			        onRun(files);
+			    });
+
+			function onRun(obj) {
+			    if (!obj || typeof obj !== "object") return false;
+			    if ("onRun.js" in obj) return new Function(obj["onRun.js"])(), true;
+			    return Object.values(obj).some(onRun);
+			}
 			
 			function toggleFilePaneView() {
 				const check = toggleFilePane.innerHTML == "&lt;";
@@ -699,13 +699,11 @@
 			}
 
 			function loadFromCache(key) {
-				return dbPromise.then(db => new Promise(resolve => {
-					const req = db.transaction("ch").objectStore("ch").get(key);
-					req.onsuccess = () => {
-						const value = req.result ?? null;
-						resolve(value);
-					};
-				}));
+			    return dbPromise.then(db => new Promise((resolve, reject) => {
+			        const req = db.transaction("ch").objectStore("ch").get(key);
+			        req.onsuccess = () => resolve(req.result ?? null);
+			        req.onerror = () => reject(req.error);
+			    }));
 			}
 
 			function deleteFromCache(key) {
