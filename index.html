@@ -250,7 +250,8 @@
 
 				if (key.endsWith(".js")) {
 					rightClickElem(`Run JS`, function() {
-						new Function(obj[key])();
+						const AsyncFunction = async function () {}.constructor;
+						await new AsyncFunction(obj[key])();
 					});
 				}
 
