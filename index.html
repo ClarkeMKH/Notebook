@@ -709,7 +709,7 @@
 			    });
 			}
 
-			function saveToCache(key, value) {
+			function saveToCache(key="files", value=files) {
 				dbPromise.then(db => db.transaction("ch", "readwrite").objectStore("ch").put(value, key));
 			}
 
