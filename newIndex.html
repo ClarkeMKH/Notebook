@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>New Site</title>
+	<meta name="description" content="Page description">
+	
+	<style>
+		@media (orientation: portrait) {
+			#root {
+				flex-direction: column;
+			}
+		}
+	</style>
+</head>
+<body style="margin:0px; padding:0px; margin:0px;">
+
+	<div id="root" style="width:100%; height:100dvh; display:flex; background-color:#444444;">
+	    <div id="firstPanel" style="min-height:0; min-width:0; flex: 1 1 0; display:grid; grid-template-rows:repeat(8, minmax(0, 1fr)); grid-template-columns:repeat(8, minmax(0, 1fr)); gap:10px; min-width:200px; margin:10px; padding:10px; border:solid #222222 1px; background-color:#666666; border-radius:8px; box-shadow:3px 3px 6px #000000;"></div>
+		<div id="secondPanel" style=" position:relative; min-height:0; min-width:0; flex: 1 1 0; display:grid; grid-template-rows:repeat(8, minmax(0, 1fr)); grid-template-columns:repeat(8, minmax(0, 1fr)); gap:10px; min-width:200px; margin:10px; padding:10px; border:solid #222222 1px; background-color:#000000; border-radius:8px; box-shadow:3px 3px 6px #000000;">
+			<img id="slideshow0" style="position:absolute; width:100%; height:100%; outline:none; border-radius:8px; object-fit:cover; opacity:0; transition:opacity 1s ease-in-out;">
+			<img id="slideshow1" style="position:absolute; width:100%; height:100%; outline:none; border-radius:8px; object-fit:cover; opacity:0; transition:opacity 1s ease-in-out;">
+		</div>
+	</div>
+	
+
+	<script>
+		
+		// Each Panel is 8x8
+		
+		const panels = {
+    "firstPanel": [
+        {
+            "width": 8,
+            "height": 2,
+            "html": "<div style=\"font-size:80px; text-align:center;\">13:20</div>\n<div style=\"font-size:22px; text-align:center;\">Wednesday 17th June 2026</div>",
+            "js": "const test = \"date\"\nconsole.log(`This is the ${test}.`)",
+            "onclick": ""
+        },
+		{
+			width: 8,
+			height: 1,
+			html: "Weather",
+			js: "",
+			onclick: ""
+		},
+		{
+			width: 4,
+			height: 1,
+			html: "Notes",
+			js: "",
+			onclick: ""
+		},
+		{
+			width: 4,
+			height: 1,
+			html: "News",
+			js: "",
+			onclick: ""
+		},
+		{
+			width: 4,
+			height: 1,
+			html: "TIC80",
+			js: "",
+			onclick: ""
+		},
+		{
+			width: 4,
+			height: 1,
+			html: "OpenSCAD",
+			js: "",
+			onclick: ""
+		}
+    ],
+    "secondPanel": []
+}
+
+
+		const slideshowImageSources = [
+			"https://wallpapers.com/images/featured/1080p-3qmj7oaige168170.jpg",
+			"https://www.whoa.in/download/best-desktop-wallpaper-backgrounds-photos---desktop-1080p-2k-4k-5k-hd-wallpapers-free-download"
+		];
+
+		let slideshowIteration = 0;
+		
+		function changeImage() {
+			const nextImage = new Image();
+			nextImage.src = slideshowImageSources[slideshowIteration];
+			nextImage.onload = () => {
+				document.getElementById(`slideshow${slideshowIteration%2}`).src = nextImage.src;
+				document.getElementById(`slideshow${(slideshowIteration+1)%2}`).style.opacity = 0;
+				document.getElementById(`slideshow${slideshowIteration%2}`).style.opacity = 1;
+				slideshowIteration = (slideshowIteration + 1) % slideshowImageSources.length;
+			};
+		}
+		
+		setTimeout(changeImage, 500);
+		setInterval(changeImage, 15000);
+
+
+		setupPanels();
+		
+		
+		async function setupPanels() {
+			for (const side in panels) {
+				for (const elem of panels[side]) {
+					const div = document.createElement("div");
+					div.innerHTML = elem.html;
+					div.style.cssText = `grid-column:span ${elem.width}; grid-row:span ${elem.height}; display:flex; flex-direction:column; justify-content:center; align-items:center; background-color:#bbbbbb; border-radius:8px; border:solid #222222 1px; overflow:hidden; ${elem.onclick ? "cursor: pointer; " : ""}`;
+					document.getElementById(side).appendChild(div);
+					const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+					await new AsyncFunction("elem", elem.js)(div);
+					if (elem.onclick) div.onclick = new Function(elem.onclick);
+					
+					const fieldToEdit = "html"
+					
+					div.addEventListener("contextmenu", (e) => {
+						e.preventDefault();
+						const txtArea = document.createElement("textarea");
+						txtArea.value = elem[fieldToEdit];
+						txtArea.style.cssText = `position:fixed; width:calc(100% - 44px); height:calc(100% - 44px); padding:10px; margin:10px; border:solid #000000 2px; outline:none; border-radius:8px;`;
+						txtArea.addEventListener("contextmenu", (event) => {
+							event.preventDefault();
+							elem[fieldToEdit] = txtArea.value;
+							navigator.clipboard.writeText(JSON.stringify(panels, null, 4));
+							txtArea.remove();
+						})
+						document.getElementById("root").appendChild(txtArea);
+					});
+					
+					
+				}
+			}
+		};
+		
+		
+		
+		
+		
+		/*
+		
+			LEFT PANEL
+				- time
+				- date
+				- weather
+				- button for notes with 3 renameable pages
+				- button for news
+				- TIC80
+				- OPENSCAD
+				
+				
+			RIGHT PANEL 
+				- Server Status / Details
+				- 
+				
+		
+		*/
+	</script>
+
+</body>
+</html>
