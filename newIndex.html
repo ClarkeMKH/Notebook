@@ -17,12 +17,18 @@
 <body style="margin:0px; padding:0px; margin:0px;">
 
 	<div id="root" style="width:100%; height:100dvh; display:flex; background-color:#444444;">
-	    <div id="firstPanel" style="min-height:0; min-width:0; flex: 1 1 0; display:grid; grid-template-rows:repeat(8, minmax(0, 1fr)); grid-template-columns:repeat(8, minmax(0, 1fr)); gap:10px; min-width:200px; margin:10px; padding:10px; border:solid #222222 1px; background-color:#666666; border-radius:8px; box-shadow:3px 3px 6px #000000;"></div>
-		<div id="secondPanel" style=" position:relative; min-height:0; min-width:0; flex: 1 1 0; display:grid; grid-template-rows:repeat(8, minmax(0, 1fr)); grid-template-columns:repeat(8, minmax(0, 1fr)); gap:10px; min-width:200px; margin:10px; padding:10px; border:solid #222222 1px; background-color:#000000; border-radius:8px; box-shadow:3px 3px 6px #000000;">
-			<img id="slideshow0" style="position:absolute; width:100%; height:100%; outline:none; border-radius:8px; object-fit:cover; opacity:0; transition:opacity 1s ease-in-out;">
-			<img id="slideshow1" style="position:absolute; width:100%; height:100%; outline:none; border-radius:8px; object-fit:cover; opacity:0; transition:opacity 1s ease-in-out;">
-		</div>
+	    <div id="firstPanel" style="min-height:0; min-width:0; flex: 1 1 0; min-width:200px; margin:10px; border:solid #222222 1px; background-color:#666666; border-radius:8px; box-shadow:3px 3px 6px #000000;"></div>
+	    <div id="secondPanel" style="position:relative; min-height:0; min-width:0; flex: 1 1 0; min-width:200px; margin:10px; border:solid #222222 1px; background-color:#666666; border-radius:8px; box-shadow:3px 3px 6px #000000;"></div>
 	</div>
+	
+	
+	<script src="https://harrison-home.co.uk/modules/zipGenerator.js"></script>
+	<script src="https://harrison-home.co.uk/modules/qrCode.js"></script>
+	<script src="https://harrison-home.co.uk/modules/qrCodeReader.js"></script>
+	<script src="https://harrison-home.co.uk/modules/kaplay.js"></script>
+	<script src="https://harrison-home.co.uk/modules/barcode.js"></script>
+	<script src="https://harrison-home.co.uk/modules/pdf-lib.js"></script>
+	<script src="https://harrison-home.co.uk/modules/three.js"></script>
 	
 
 	<script>
@@ -33,49 +39,66 @@
     "firstPanel": [
         {
             "width": 8,
+            "height": 3,
+            "html": "<div id=\"time\" style=\"font-size:80px; text-align:center;\">13:20</div>\n<div id=\"date\" style=\"font-size:22px; text-align:center;\">Wednesday 17th June 2026</div>",
+            "js": "function updateTime() {\n    if (!elem) return;\n    const daysOfWeek = [\"Sunday\", \"Monday\", \"Tuesday\", \"Wednesday\", \"Thursday\", \"Friday\", \"Saturday\"];\n    const monthsOfYear = [\"January\", \"February\", \"March\", \"April\", \"May\", \"June\", \"July\", \"August\", \"September\", \"October\", \"November\", \"December\"];\n    const date = new Date();\n\n    const timeText = `${date.getHours()}:${date.getMinutes()<10 ? '0' : ''}${date.getMinutes()}`;\n    const dayText = `${daysOfWeek[date.getDay()]} ${date.getDate()}th ${monthsOfYear[date.getMonth()]} ${date.getFullYear()}`;\n\n    document.getElementById(\"time\").innerHTML = timeText;\n    document.getElementById(\"date\").innerHTML = dayText;\n    setTimeout(updateTime, 1000);\n}\nupdateTime();",
+            "onclick": "setupPanels();"
+        },
+        {
+            "width": 8,
             "height": 2,
-            "html": "<div style=\"font-size:80px; text-align:center;\">13:20</div>\n<div style=\"font-size:22px; text-align:center;\">Wednesday 17th June 2026</div>",
-            "js": "const test = \"date\"\nconsole.log(`This is the ${test}.`)",
+            "html": "Weather",
+            "js": "",
             "onclick": ""
         },
-		{
-			width: 8,
-			height: 1,
-			html: "Weather",
-			js: "",
-			onclick: ""
-		},
-		{
-			width: 4,
-			height: 1,
-			html: "Notes",
-			js: "",
-			onclick: ""
-		},
-		{
-			width: 4,
-			height: 1,
-			html: "News",
-			js: "",
-			onclick: ""
-		},
-		{
-			width: 4,
-			height: 1,
-			html: "TIC80",
-			js: "",
-			onclick: ""
-		},
-		{
-			width: 4,
-			height: 1,
-			html: "OpenSCAD",
-			js: "",
-			onclick: ""
-		}
+        {
+            "width": 4,
+            "height": 1,
+            "html": "Notes",
+            "js": "",
+            "onclick": ""
+        },
+        {
+            "width": 4,
+            "height": 1,
+            "html": "News",
+            "js": "",
+            "onclick": ""
+        },
+        {
+            "width": 4,
+            "height": 1,
+            "html": "TIC80",
+            "js": "",
+            "onclick": "document.getElementById(\"secondPanel\").style.padding = '0px';\n\ndocument.getElementById(\"secondPanel\").innerHTML = `<iframe src=\"https://harrison-home.co.uk/Editor/\" style=\"width:100%; height:100%; outline:none; border:0px; border-radius:8px;\"></iframe>`;"
+        },
+        {
+            "width": 4,
+            "height": 1,
+            "html": "OpenSCAD",
+            "js": "",
+            "onclick": ""
+        },
+        {
+            "width": 8,
+            "height": 1,
+            "html": "",
+            "js": "",
+            "onclick": ""
+        }
     ],
-    "secondPanel": []
+    "secondPanel": [
+       {
+            "width": 8,
+            "height": 1,
+            "html": "",
+            "js": "",
+            "onclick": ""
+        }	
+	]
 }
+
+
 
 
 		const slideshowImageSources = [
@@ -85,36 +108,36 @@
 
 		let slideshowIteration = 0;
 		
-		function changeImage() {
-			const nextImage = new Image();
-			nextImage.src = slideshowImageSources[slideshowIteration];
-			nextImage.onload = () => {
-				document.getElementById(`slideshow${slideshowIteration%2}`).src = nextImage.src;
-				document.getElementById(`slideshow${(slideshowIteration+1)%2}`).style.opacity = 0;
-				document.getElementById(`slideshow${slideshowIteration%2}`).style.opacity = 1;
-				slideshowIteration = (slideshowIteration + 1) % slideshowImageSources.length;
-			};
-		}
 		
-		setTimeout(changeImage, 500);
-		setInterval(changeImage, 15000);
-
-
+		
+		
+		
 		setupPanels();
-		
-		
+
 		async function setupPanels() {
+		
+			try {
+				const controller = new AbortController();
+				setTimeout(() => {controller.abort();}, 500);
+				const res = await fetch("https://www.google.com", {method: "GET", mode: "no-cors", cache: "no-store", signal: controller.signal});
+				console.log("Reached Home Server");
+			} catch(e) {
+				panels["secondPanel"] = [];
+				console.log("Cannot Reach Home Server");
+			}
+			
 			for (const side in panels) {
+				document.getElementById(side).innerHTML = `<div id="${side}Grid" style="opacity:0; position:relative; z-index:10; transition:opacity 1s ease-in-out; width:calc(100% - 20px); height:calc(100% - 20px); display:grid; grid-template-rows:repeat(8, minmax(0, 1fr)); grid-template-columns:repeat(8, minmax(0, 1fr)); gap:10px; margin:10px;"></div>`;
 				for (const elem of panels[side]) {
 					const div = document.createElement("div");
 					div.innerHTML = elem.html;
 					div.style.cssText = `grid-column:span ${elem.width}; grid-row:span ${elem.height}; display:flex; flex-direction:column; justify-content:center; align-items:center; background-color:#bbbbbb; border-radius:8px; border:solid #222222 1px; overflow:hidden; ${elem.onclick ? "cursor: pointer; " : ""}`;
-					document.getElementById(side).appendChild(div);
+					document.getElementById(side + "Grid").appendChild(div);
 					const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
 					await new AsyncFunction("elem", elem.js)(div);
 					if (elem.onclick) div.onclick = new Function(elem.onclick);
 					
-					const fieldToEdit = "html"
+					const fieldToEdit = "onclick"
 					
 					div.addEventListener("contextmenu", (e) => {
 						e.preventDefault();
@@ -128,15 +151,51 @@
 							txtArea.remove();
 						})
 						document.getElementById("root").appendChild(txtArea);
+						textAreaTabFunctionality(txtArea);
 					});
-					
-					
 				}
 			}
+			
+			setTimeout(() => {
+				document.getElementById("firstPanelGrid").style.opacity = 1;
+				document.getElementById("secondPanelGrid").style.opacity = 1;
+			}, 100)
+			
+			let slideshowIteration = 0;
+			document.getElementById("secondPanel").innerHTML += `
+				<img id="slideshow0" style="position:absolute; top:0px; width:100%; height:100%; outline:none; border-radius:8px; object-fit:cover; opacity:0; transition:opacity 1s ease-in-out;">
+				<img id="slideshow1" style="position:absolute; top:0px; width:100%; height:100%; outline:none; border-radius:8px; object-fit:cover; opacity:0; transition:opacity 1s ease-in-out;">
+			`;
+			function changeImage() {
+				const nextImage = new Image();
+				nextImage.src = slideshowImageSources[slideshowIteration];
+				nextImage.onload = () => {
+					console.log(nextImage.src)
+					document.getElementById(`slideshow${slideshowIteration%2}`).src = nextImage.src;
+					document.getElementById(`slideshow${(slideshowIteration+1)%2}`).style.opacity = 0;
+					document.getElementById(`slideshow${slideshowIteration%2}`).style.opacity = 1;
+					slideshowIteration = (slideshowIteration + 1) % slideshowImageSources.length;
+				};
+				if (document.getElementById(`slideshow0`)) setTimeout(changeImage, 15000)
+			}
+			setTimeout(changeImage, 200);
 		};
 		
 		
 		
+		
+		function textAreaTabFunctionality(txtArea) {
+			txtArea.addEventListener('keydown', function(e) {
+				if (e.key === 'Tab') {
+					e.preventDefault();
+					const start = this.selectionStart;
+					const end = this.selectionEnd;
+					const spaces = '    ';
+					this.value = this.value.substring(0, start) + spaces + this.value.substring(end);
+					this.selectionStart = this.selectionEnd = start + spaces.length;
+				}
+			});
+		}
 		
 		
 		/*
