@@ -15,6 +15,18 @@ function Panel {
         Write-Host "`n> " -NoNewline -ForegroundColor Yellow
         $input = Read-Host
 
+        try {
+            $number = [int]$userInput
+            if ($number -ge 1 -and $number -le 10) {
+                Write-Host "Valid! You entered $number"
+            } else {
+                Write-Host "Out of range"
+            }
+        }
+        catch {
+            Write-Host "Not a valid number"
+        }
+
     }
 }
  
