@@ -3,6 +3,7 @@ function Panel {
         [string]$Text,
         [object]$Options = @{}
     )
+    $entries = @($Options.GetEnumerator())
     Clear-Host
     Write-Host "================================================================`n                      TERMINAL COMPANION                      `n================================================================`n`n"
     Write-Host "$Text`n"
@@ -13,11 +14,16 @@ function Panel {
     }
     while ($Options) {
         Write-Host "`n> " -NoNewline -ForegroundColor Yellow
-        $input = Read-Host
-
+        $userInput = Read-Host
         try {
             $number = [int]$userInput
-            if ($number -ge 1 -and $number -le 10) {
+            if ($number -ge 1 -and $number -le $Options.Count) {
+                if ($entries[$number-1].Value -is [hashtable]) {
+                    Panel -Text $Text -Options $entries[$number-1].Value
+                }
+                else {
+                    & $entries[$number-1].Value
+                }
                 Write-Host "Valid! You entered $number"
             } else {
                 Write-Host "Out of range"
@@ -30,7 +36,12 @@ function Panel {
     }
 }
  
-Panel -Text "Hi, Welcome to the Terminal Companion created by Clarke Harrison`n`nPlease select from one of the options below." -Options @{"Option1"=1; "Option2"=2}
+Panel -Text "Hi, Welcome to the Terminal Companion created by Clarke Harrison`n`nPlease select from one of the options below." -Options [ordered]@{
+    "Microsoft 365" = [ordered]@{
+        "Sign In" = {}
+    }
+    "This System" = { Write-Host "Test" }
+}
 
 
 
