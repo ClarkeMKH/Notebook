@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tile Builder</title>
+</head>
+<body style="margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#ffffff;">
+
+<!-- The whole site renders inside here. Everything below #app is editor-only chrome. -->
+<div id="app"></div>
+
+<!-- Editor-only hint + buttons (never included in Publish output) -->
+<div id="hint" style="position:fixed;left:16px;bottom:16px;max-width:260px;background:rgba(16,22,31,.9);color:#fff;font-size:12px;line-height:1.5;padding:8px 12px;border-radius:8px;z-index:9999;">
+  Click text or images to edit. Use the &#9650;&#9660;&#10005; on each tile to reorder or remove, and + to add a tile.
+</div>
+<div style="position:fixed;right:16px;bottom:16px;display:flex;gap:10px;z-index:9999;">
+  <button id="saveBtn" style="background:#ffffff;color:#10161f;border:1px solid #d7dde6;font-weight:600;font-size:14px;padding:10px 18px;border-radius:10px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.12);">Save</button>
+  <button id="publishBtn" style="background:#4f46e5;color:#fff;border:0;font-weight:600;font-size:14px;padding:10px 18px;border-radius:10px;cursor:pointer;box-shadow:0 4px 14px rgba(79,70,229,.35);">Publish</button>
+</div>
+
+<script>
+/* =========================================================================
+   1. THEME  — change these colours to re-skin the whole site consistently.
+   ========================================================================= */
+const theme = {
+  bg:       "#ffffff",   // page background
+  surface:  "#f5f2ec",   // alternating section background
+  text:     "#171a1f",   // headings / dark text
+  muted:    "#5c6672",   // body / secondary text
+  border:   "#e4e2db",   // hairlines / card borders
+  primary:  "#4f46e5",   // main brand / buttons / edit outline
+  accent:   "#e2603b",   // call-to-action accent
+  menuBg:   "#171a1f",   // top menu bar background
+  menuText: "#ffffff"    // top menu bar text
+};
+
+const pageGradient = "linear-gradient(160deg, " + theme.bg + " 0%, " + theme.surface + " 100%)";
+const tileGradients = [
+  ["#eef2f6", "#dde5ec"], // soft blue-grey
+  ["#eef4ee", "#dfe8df"]  // soft green-grey
+];
+function tileGradientCSS(index){
+  var pair = tileGradients[index % tileGradients.length];
+  return "linear-gradient(160deg, " + pair[0] + " 0%, " + pair[1] + " 100%)";
+}
+
+/* =========================================================================
+   2. TILES  — this is your whole website as data.
+      The first key is always "Menu". Every other key is a section that
+      picks a template via its "Type".
+      Save logs this object; edits write straight back into it.
+   ========================================================================= */
+const tiles = {
+  "Menu": {
+    "logoSrc": "https://placehold.co/72x72/4f46e5/ffffff?text=%E2%97%86",
+    "menuTitle": "Northwind",
+    "items": {
+      "Home": "window.scrollTo({top:0,behavior:'smooth'});",
+      "Docs": "window.location.href='https://www.google.com';",
+      "Say hi": "alert('Thanks for stopping by!');"
+    }
+  },
+  "Hero Tile": {
+    "Type": "Hero",
+    "img1Src": "https://placehold.co/160x160/4f46e5/ffffff?text=%E2%97%86",
+    "title": "Build a site out of tiles",
+    "text": "Type your content, drop in images, and hit Publish. No frameworks, no build step — just one HTML file you fully own."
+  },
+  "Features Tile": {
+    "Type": "Features",
+    "title": "Why it's nice",
+    "cards": [
+      { "img": "https://placehold.co/96x96/e2603b/ffffff?text=1", "title": "Self-contained", "text": "One file. Open it anywhere, edit it, ship it." },
+      { "img": "https://placehold.co/96x96/e2603b/ffffff?text=2", "title": "Live editing", "text": "Click text or images and change them in place." },
+      { "img": "https://placehold.co/96x96/e2603b/ffffff?text=2", "title": "Live editing", "text": "Click text or images and change them in place." },
+      { "img": "https://placehold.co/96x96/e2603b/ffffff?text=2", "title": "Live editing", "text": "Click text or images and change them in place." },
+      { "img": "https://placehold.co/96x96/e2603b/ffffff?text=3", "title": "Clean export", "text": "Publish strips the editor and hands you tidy HTML." }
+    ]
+  },
+  "Split Tile": {
+    "Type": "ImageText",
+    "side": "left",
+    "img1Src": "https://placehold.co/560x400/f5f2ec/171a1f?text=Your+image",
+    "title": "Image beside text",
+    "text": "Set \"side\" to \"left\" or \"right\" in the tile to flip which side the image sits on. Everything reflows on mobile automatically."
+  },
+  "Story Tile": {
+    "Type": "TextBlock",
+    "title": "Just a block of words",
+    "text": "Sometimes you only need a heading and a paragraph. This template keeps a comfortable reading width and nothing else to distract."
+  },
+  "Contact Tile": {
+    "Type": "Contact",
+    "title": "Get in touch",
+    "text": "Have a question or want to say hello? Pop your email and a message below.",
+    "toEmail": "hello@northwind.com",
+    "btnText": "Send message"
+  },
+  "Footer Tile": {
+    "Type": "Footer",
+    "text": "© 2026 Northwind — built with tiles."
+  }
+};
+
+/* =========================================================================
+   3. TEMPLATES — each tile Type maps to an HTML string with tokens:
+        {{field}}            -> a text/URL value from the tile (escaped)
+        {{theme.name}}       -> a colour from the theme object
+        {{edit.field}}       -> becomes data-edit="field" (editor) or "" (publish)
+        {{img.field}}        -> becomes data-img="field"  (editor) or "" (publish)
+        {{{rawHTML}}}        -> raw HTML injected as-is (used for repeated cards)
+   ========================================================================= */
+const templates = {
+
+  "Hero":
+    '<div style="position:relative;min-height:600px;height:calc(100dvh - 76px);display:flex;align-items:center;justify-content:center;">' +
+      '<img {{img.img1Src}} src="{{img1Src}}" style="width:100%;height:100%;object-fit:cover;position:absolute;top:0px;left:0px;z-index:1;opacity:0.5">' +
+      '<div style="display:flex;flex-direction:column;margin:0px 40px;width:100%;max-width:1400px;gap:20px;">' +
+        '<div {{edit.title}} style="font-size:56px;max-width:600px;line-height:1.1;font-weight:800;color:{{theme.text}};z-index:2;text-align:center;">{{title}}</div>' +
+        '<div {{edit.text}} style="font-size:18px;max-width:600px;color:{{theme.muted}};color:{{theme.text}};font-weight:600;line-height:1.6;z-index:2;text-align:center;">{{text}}</div>' +
+      '</div>' +
+    '</div>',
+
+  "TextBlock":
+    '<div style="padding:64px 24px;max-width:1400px;margin:0 auto;text-align:center;">' +
+      '<div {{edit.title}} style="font-size:32px;font-weight:700;color:{{theme.text}};margin-bottom:16px;">{{title}}</div>' +
+      '<div {{edit.text}} style="font-size:17px;color:{{theme.muted}};line-height:1.75;">{{text}}</div>' +
+    '</div>',
+
+  "ImageText":
+    '<div style="display:flex;flex-wrap:wrap;gap:44px;align-items:center;padding:64px 24px;text-align:center;max-width:1400px;margin:0 auto;{{flexDir}}">' +
+      '<img {{img.img1Src}} src="{{img1Src}}" style="flex:1 1 300px;width:100%;max-width:600px;border-radius:16px;height:auto;">' +
+      '<div style="flex:1 1 300px;">' +
+        '<div {{edit.title}} style="font-size:30px;font-weight:700;color:{{theme.text}};margin-bottom:14px;">{{title}}</div>' +
+        '<div {{edit.text}} style="font-size:17px;color:{{theme.muted}};line-height:1.7;">{{text}}</div>' +
+      '</div>' +
+    '</div>',
+
+  "Features":
+    '<div style="padding:80px 24px;text-align:center;">' +
+      '<div {{edit.title}} style="font-size:34px;font-weight:800;color:{{theme.text}};margin-bottom:48px;">{{title}}</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:24px;justify-content:center;max-width:1400px;margin:0 auto;">{{{cardsHTML}}}</div>' +
+    '</div>',
+
+  "Contact":
+    '<div style="padding:80px 24px;display:flex;justify-content:center;">' +
+      '<div style="max-width:560px;width:100%;background:{{theme.bg}};border:1px solid {{theme.border}};border-radius:20px;padding:48px 40px;box-shadow:0 10px 34px rgba(0,0,0,.08);">' +
+        '<div {{edit.title}} style="font-size:30px;font-weight:800;color:{{theme.text}};margin-bottom:12px;text-align:center;">{{title}}</div>' +
+        '<div {{edit.text}} style="font-size:16px;color:{{theme.muted}};line-height:1.6;margin-bottom:32px;text-align:center;">{{text}}</div>' +
+        '<input id="{{uid}}_email" type="email" placeholder="Your email address" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1px solid {{theme.border}};border-radius:10px;font-size:15px;margin-bottom:14px;font-family:inherit;">' +
+        '<textarea id="{{uid}}_msg" rows="5" placeholder="Your message" style="width:100%;box-sizing:border-box;padding:14px 16px;border:1px solid {{theme.border}};border-radius:10px;font-size:15px;margin-bottom:22px;font-family:inherit;resize:vertical;"></textarea>' +
+        '<span {{btn}} {{edit.btnText}} style="display:block;text-align:center;background:{{theme.primary}};color:#ffffff;font-weight:700;font-size:16px;padding:15px;border-radius:10px;cursor:pointer;">{{btnText}}</span>' +
+      '</div>' +
+    '</div>',
+
+  "Footer":
+    '<div style="padding:44px 24px;background:{{theme.menuBg}};text-align:center;">' +
+      '<div {{edit.text}} style="color:{{theme.menuText}};font-size:14px;opacity:.75;">{{text}}</div>' +
+    '</div>'
+};
+
+// Sub-template for one Features card. #IDX# is replaced with the card's index
+// before filling, so edits write back to cards.0.title, cards.1.title, etc.
+const cardTpl =
+  '<div style="flex:1 1 260px;max-width:320px;background:{{theme.surface}};border:1px solid {{theme.border}};border-radius:16px;padding:32px;">' +
+    '<img {{img.cards.#IDX#.img}} src="{{img}}" style="width:250px;height:250px;object-fit:cover;border-radius:12px;margin-bottom:18px;">' +
+    '<div {{edit.cards.#IDX#.title}} style="font-size:19px;font-weight:700;color:{{theme.text}};margin-bottom:8px;">{{title}}</div>' +
+    '<div {{edit.cards.#IDX#.text}} style="font-size:15px;color:{{theme.muted}};line-height:1.6;">{{text}}</div>' +
+  '</div>';
+
+/* ENGINE (minified — do not edit) */
+function escapeText(value){return String(value==null?'':value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');} function readField(object,path){var parts=path.split('.');var current=object;for(var i=0;i<parts.length;i++){if(current==null)return '';current=current[parts[i]];}return current;} function writeField(object,path,value){var parts=path.split('.');var current=object;for(var i=0;i<parts.length-1;i++){current=current[parts[i]];}current[parts[parts.length-1]]=value;}  function fillTemplate(templateString,data,mode){var html=templateString; html=html.replace(/\{\{\{(\w+)\}\}\}/g,function(whole,name){return data[name]==null?'':data[name];}); html=html.replace(/\{\{(edit|img)\.([^}]+)\}\}/g,function(whole,kind,field){if(mode==='publish')return '';if(kind==='edit')return 'data-edit="'+field+'"';return 'data-img="'+field+'"';}); html=html.replace(/\{\{btn\}\}/g,function(){if(mode==='publish')return data.btnJs?'onclick="'+escapeText(data.btnJs)+'"':'';return 'data-btn="1"';}); html=html.replace(/\{\{theme\.(\w+)\}\}/g,function(whole,name){return theme[name]||'';}); html=html.replace(/\{\{([\w.]+)\}\}/g,function(whole,field){return escapeText(readField(data,field));});return html;} function buildTileHTML(tile,mode){var template=templates[tile.Type];if(!template){if(mode==='publish')return '';return '<div style="padding:24px;background:#fff4f4;color:#b00020;border:1px dashed #b00020;text-align:center;">Unknown tile type: "'+escapeText(tile.Type)+'"</div>';}var data=Object.assign({},tile);if(tile.Type==='ImageText'){data.flexDir=(tile.side==='right')?'flex-direction:row-reverse;':'';}if(tile.Type==='Features'){data.cardsHTML=buildCards(tile.cards,mode);}if(tile.Type==='Contact'){data.uid='contact'+Math.floor(Math.random()*1e6);data.btnJs="var e=document.getElementById('"+data.uid+"_email').value;var m=document.getElementById('"+data.uid+"_msg').value;if(!e||!m){alert('Please enter your email and a message.');}else{window.location.href='mailto:"+(tile.toEmail||'')+"?subject=New%20message%20from%20website&body='+encodeURIComponent('From: '+e+' - '+m);}";}return fillTemplate(template,data,mode);}function buildCards(cards,mode){if(!Array.isArray(cards))return '';var html='';for(var i=0;i<cards.length;i++){var cardTemplate=cardTpl.replace(/#IDX#/g,i);var cardData=Object.assign({},cards[i]);html+=fillTemplate(cardTemplate,cardData,mode);}return html;} const miBtn='background:rgba(255,255,255,.16);color:'+theme.menuText+';border:0;border-radius:6px;min-width:22px;height:22px;line-height:1;font-size:12px;cursor:pointer;margin-left:2px;';function buildMenu(mode){var menu=tiles.Menu;var itemsHTML='';var labels=Object.keys(menu.items);for(var i=0;i<labels.length;i++){var label=labels[i];var js=menu.items[label];if(mode==='publish'){ itemsHTML+='<span onclick="'+escapeText(js)+'" style="color:'+theme.menuText+';cursor:pointer;padding:12px 16px;font-size:15px;display:block;">'+escapeText(label)+'</span>';}else{ itemsHTML+='<span data-mi-group style="display:inline-flex;align-items:center;">'+'<span data-menuitem="1" data-js="'+escapeText(js)+'" style="color:'+theme.menuText+';cursor:text;padding:12px 6px 12px 12px;font-size:15px;">'+escapeText(label)+'</span>'+'<button data-mi-editjs title="Edit click action (JS)" style="'+miBtn+'">{ }</button>'+'<button data-mi-del title="Delete this item" style="'+miBtn+'">&#10005;</button>'+'</span>';}}if(mode!=='publish'){itemsHTML+='<button data-mi-add title="Add a menu item" style="'+miBtn+'font-size:16px;margin-left:8px;">+</button>';}var logoHook=(mode==='publish')?'':'data-img="logoSrc"';var titleHook=(mode==='publish')?'':'data-edit="menuTitle"';return ''+'<div style="display:flex;align-items:center;justify-content:space-between;position:relative;background:'+theme.menuBg+';padding:12px 16px;">'+'<div style="display:flex;align-items:center;gap:16px;">'+'<img '+logoHook+' src="'+escapeText(menu.logoSrc)+'" style="height:52px;width:52px;object-fit:cover;border-radius:8px;">'+'<span '+titleHook+' style="color:'+theme.menuText+';font-size:20px;font-weight:700;">'+escapeText(menu.menuTitle)+'</span>'+'</div>'+'<button id="hamburger" onclick="__toggleMenu()" style="display:none;background:none;border:0;color:'+theme.menuText+';font-size:26px;line-height:1;cursor:pointer;">&#9776;</button>'+'<div id="menuItems" data-open="0" style="display:flex;align-items:center;gap:2px;background:'+theme.menuBg+';transition:transform .28s ease, opacity .28s ease;">'+itemsHTML+'</div>'+'</div>';} var app=document.getElementById('app'); function contentKeys(){return Object.keys(tiles).filter(function(k){return k!=='Menu';});} function renderSite(){app.innerHTML='';var menuWrapper=document.createElement('div');menuWrapper.setAttribute('data-tile','Menu');menuWrapper.innerHTML=buildMenu('edit');app.appendChild(menuWrapper);app.appendChild(makeInserter(null)); var keys=contentKeys();var gradIndex=0;for(var i=0;i<keys.length;i++){var key=keys[i];var wrapper=document.createElement('div');wrapper.setAttribute('data-tile',key);wrapper.style.position='relative';if(tiles[key].Type!=='Footer'){wrapper.style.background=tileGradientCSS(gradIndex);gradIndex++;} wrapper.innerHTML=buildTileHTML(tiles[key],'edit');wrapper.appendChild(makeTileControls(key,i===0,i===keys.length-1));app.appendChild(wrapper);app.appendChild(makeInserter(key));}enableEditing();layoutMenu();} function makeTileControls(key,isFirst,isLast){var bar=document.createElement('div');bar.style.cssText='position:absolute;top:8px;right:8px;display:flex;gap:4px;z-index:5;';bar.appendChild(ctrlButton('&#9650;','Move up',isFirst,false,function(){moveTile(key,-1);}));bar.appendChild(ctrlButton('&#9660;','Move down',isLast,false,function(){moveTile(key,1);}));bar.appendChild(ctrlButton('&#10005;','Delete tile',false,true,function(){deleteTile(key);}));return bar;}function ctrlButton(html,title,disabled,danger,onClick){var b=document.createElement('button');b.innerHTML=html;b.title=title;b.style.cssText='width:26px;height:26px;border:0;border-radius:6px;font-size:12px;line-height:1;color:#fff;'+'background:'+(danger?'rgba(200,40,40,.9)':'rgba(20,25,35,.72)')+';'+(disabled?'opacity:.3;cursor:default;':'cursor:pointer;');if(!disabled)b.addEventListener('click',onClick);return b;} function makeInserter(afterKey){var row=document.createElement('div');row.style.cssText='display:flex;justify-content:center;height:0;position:relative;z-index:4;';var btn=document.createElement('button');btn.innerHTML='+';btn.title='Add a tile here';btn.style.cssText='transform:translateY(-50%);width:30px;height:30px;border-radius:50%;border:0;'+'background:'+theme.primary+';color:#fff;font-size:20px;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);';btn.addEventListener('click',function(){openTypeModal(afterKey);});row.appendChild(btn);return row;}  function reorderTiles(order){var saved={};order.forEach(function(k){saved[k]=tiles[k];});contentKeys().forEach(function(k){delete tiles[k];});order.forEach(function(k){tiles[k]=saved[k];});}function moveTile(key,delta){var order=contentKeys();var from=order.indexOf(key);var to=from+delta;if(to<0||to>=order.length)return;order.splice(from,1);order.splice(to,0,key);reorderTiles(order);renderSite();}function deleteTile(key){if(!confirm('Delete this "'+tiles[key].Type+'" tile? This can\'t be undone.'))return;delete tiles[key];renderSite();}function addTile(afterKey,type){var key=uniqueKey(type);tiles[key]=blankTile(type);var order=contentKeys().filter(function(k){return k!==key;});var at=(afterKey==null)?0:order.indexOf(afterKey)+1;order.splice(at,0,key);reorderTiles(order);renderSite();}function uniqueKey(type){var base=type+' tile',n=1,key=base+' '+n;while(tiles[key]){n++;key=base+' '+n;}return key;} function blankTile(type){var pc=theme.primary.slice(1),ac=theme.accent.slice(1);if(type==='Hero')return{Type:'Hero',img1Src:'https://placehold.co/160x160/'+pc+'/ffffff?text=%E2%97%86',title:'New heading',text:'Some text below the title.'};if(type==='TextBlock')return{Type:'TextBlock',title:'New heading',text:'Some text goes here.'};if(type==='ImageText')return{Type:'ImageText',side:'left',img1Src:'https://placehold.co/560x400/f5f2ec/171a1f?text=Image',title:'New heading',text:'Some text beside the image.'};if(type==='Features')return{Type:'Features',title:'Features',cards:[{img:'https://placehold.co/96x96/'+ac+'/ffffff?text=1',title:'Card one',text:'Describe it.'},{img:'https://placehold.co/96x96/'+ac+'/ffffff?text=2',title:'Card two',text:'Describe it.'},{img:'https://placehold.co/96x96/'+ac+'/ffffff?text=3',title:'Card three',text:'Describe it.'}]};if(type==='Contact')return{Type:'Contact',title:'Get in touch',text:'Send us a message and we\'ll get back to you.',toEmail:'hello@example.com',btnText:'Send message'};if(type==='Footer')return{Type:'Footer',text:'\u00A9 2026 Your name'};return{Type:type};} var pendingAfterKey=null; function buildTypeModal(){var overlay=document.createElement('div');overlay.id='typeModal';overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:10000;';var card=document.createElement('div');card.style.cssText='background:#fff;border-radius:14px;padding:24px;width:calc(100% - 40px);max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.3);';var heading=document.createElement('div');heading.textContent='Add a tile';heading.style.cssText='font-size:18px;font-weight:700;color:'+theme.text+';margin-bottom:16px;';var grid=document.createElement('div');grid.style.cssText='display:flex;flex-wrap:wrap;gap:10px;';Object.keys(templates).forEach(function(type){var b=document.createElement('button');b.textContent=type;b.style.cssText='flex:1 1 120px;padding:14px 10px;border:1px solid '+theme.border+';border-radius:10px;background:'+theme.surface+';color:'+theme.text+';font-size:15px;font-weight:600;cursor:pointer;';b.addEventListener('click',function(){var where=pendingAfterKey;closeTypeModal();addTile(where,type);});grid.appendChild(b);});var cancel=document.createElement('button');cancel.textContent='Cancel';cancel.style.cssText='margin-top:16px;width:100%;padding:10px;border:0;border-radius:10px;background:#eceff3;color:'+theme.text+';font-size:14px;cursor:pointer;';cancel.addEventListener('click',closeTypeModal);overlay.addEventListener('click',function(e){if(e.target===overlay)closeTypeModal();});card.appendChild(heading);card.appendChild(grid);card.appendChild(cancel);overlay.appendChild(card);document.body.appendChild(overlay);}function openTypeModal(afterKey){pendingAfterKey=afterKey;document.getElementById('typeModal').style.display='flex';}function closeTypeModal(){document.getElementById('typeModal').style.display='none';} function enableEditing(){makeTextEditable();makeImagesClickable();makeMenuControls();}function highlightOnHover(el){el.addEventListener('mouseenter',function(){el.style.outline='2px dashed '+theme.primary;el.style.outlineOffset='3px';});el.addEventListener('mouseleave',function(){if(document.activeElement!==el)el.style.outline='none';});el.addEventListener('blur',function(){el.style.outline='none';});}function tileKeyOf(el){return el.closest('[data-tile]').getAttribute('data-tile');}function makeTextEditable(){app.querySelectorAll('[data-edit]').forEach(function(el){el.contentEditable='true';el.style.cursor='text';el.title='Click to edit';highlightOnHover(el);el.addEventListener('input',function(){writeField(tiles[tileKeyOf(el)],el.getAttribute('data-edit'),el.innerText);});});}function makeImagesClickable(){app.querySelectorAll('[data-img]').forEach(function(el){el.style.cursor='pointer';el.title='Click to change image URL';highlightOnHover(el);el.addEventListener('click',function(){var field=el.getAttribute('data-img');var currentUrl=readField(tiles[tileKeyOf(el)],field)||'';var newUrl=prompt('Enter image URL:',currentUrl);if(newUrl!==null){writeField(tiles[tileKeyOf(el)],field,newUrl);el.setAttribute('src',newUrl);}});});} function makeMenuControls(){app.querySelectorAll('[data-menuitem]').forEach(function(label){label.contentEditable='true';label.title='Click to rename. Its link runs only after Publish.';highlightOnHover(label);label.addEventListener('blur',rebuildMenuItems);});app.querySelectorAll('[data-mi-editjs]').forEach(function(btn){btn.addEventListener('click',function(){var label=btn.closest('[data-mi-group]').querySelector('[data-menuitem]');var next=prompt('JavaScript to run when this item is clicked:',label.getAttribute('data-js')||'');if(next!==null){label.setAttribute('data-js',next);rebuildMenuItems();}});});app.querySelectorAll('[data-mi-del]').forEach(function(btn){btn.addEventListener('click',function(){btn.closest('[data-mi-group]').remove();rebuildMenuItems();});});var addBtn=app.querySelector('[data-mi-add]');if(addBtn){addBtn.addEventListener('click',function(){var label=prompt('New menu item label:','New link');if(!label)return;tiles.Menu.items[label]="alert('"+label.replace(/'/g,"\\'")+" clicked');";renderSite();});}} function rebuildMenuItems(){var next={};app.querySelectorAll('#menuItems [data-menuitem]').forEach(function(el){var label=el.innerText.trim();if(label)next[label]=el.getAttribute('data-js');});tiles.Menu.items=next;}   function setMenuIcon(open){var button=document.getElementById('hamburger');if(button)button.innerHTML=open?'\u2715':'\u2630';}function layoutMenu(){var items=document.getElementById('menuItems');var button=document.getElementById('hamburger');if(!items||!button)return;var open=items.getAttribute('data-open')==='1';if(window.innerWidth>=768){items.style.position='static';items.style.flexDirection='row';items.style.width='auto';items.style.padding='0';items.style.boxShadow='none';items.style.transform='none';items.style.opacity='1';items.style.pointerEvents='auto';items.style.display='flex';button.style.display='none';}else{button.style.display='block';items.style.position='absolute';items.style.top='100%';items.style.left='0';items.style.right='0';items.style.width='100%';items.style.flexDirection='column';items.style.padding='6px 0';items.style.boxShadow='0 8px 20px rgba(0,0,0,.18)';items.style.zIndex='50';items.style.display='flex'; items.style.transform=open?'translateY(0)':'translateY(-12px)';items.style.opacity=open?'1':'0';items.style.pointerEvents=open?'auto':'none';}setMenuIcon(open);}window.__toggleMenu=function(){var items=document.getElementById('menuItems');items.setAttribute('data-open',items.getAttribute('data-open')==='1'?'0':'1');layoutMenu();};window.addEventListener('resize',layoutMenu); function buildPublishHTML(){var body=buildMenu('publish');var keys=contentKeys();var gradIndex=0;for(var i=0;i<keys.length;i++){var tile=tiles[keys[i]];var tileHTML=buildTileHTML(tile,'publish');if(tile.Type==='Footer'){body+=tileHTML;}else{body+='<div style="background:'+tileGradientCSS(gradIndex)+';">'+tileHTML+'</div>';gradIndex++;}} var menuScript=`<script>
+(function () {
+  function setIcon(open) {
+    var button = document.getElementById('hamburger');
+    if (button) button.innerHTML = open ? '\u2715' : '\u2630';
+  }
+  function layoutMenu() {
+    var items = document.getElementById('menuItems');
+    var button = document.getElementById('hamburger');
+    if (!items || !button) return;
+    var open = items.getAttribute('data-open') === '1';
+    if (window.innerWidth >= 768) {
+      items.style.position = 'static';
+      items.style.flexDirection = 'row';
+      items.style.width = 'auto';
+      items.style.padding = '0';
+      items.style.boxShadow = 'none';
+      items.style.transform = 'none';
+      items.style.opacity = '1';
+      items.style.pointerEvents = 'auto';
+      items.style.display = 'flex';
+      button.style.display = 'none';
+    } else {
+      button.style.display = 'block';
+      items.style.position = 'absolute';
+      items.style.top = '100%';
+      items.style.left = '0';
+      items.style.right = '0';
+      items.style.width = '100%';
+      items.style.flexDirection = 'column';
+      items.style.padding = '6px 0';
+      items.style.boxShadow = '0 8px 20px rgba(0,0,0,.18)';
+      items.style.zIndex = '50';
+      items.style.display = 'flex';
+      items.style.transform = open ? 'translateY(0)' : 'translateY(-12px)';
+      items.style.opacity = open ? '1' : '0';
+      items.style.pointerEvents = open ? 'auto' : 'none';
+    }
+    setIcon(open);
+  }
+  window.__toggleMenu = function () {
+    var items = document.getElementById('menuItems');
+    items.setAttribute('data-open', items.getAttribute('data-open') === '1' ? '0' : '1');
+    layoutMenu();
+  };
+  window.addEventListener('resize', layoutMenu);
+  layoutMenu();
+})();
+<\/script>`;return '<!DOCTYPE html>\n<html lang="en">\n<head>\n'+'<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1">\n'+'<title>'+escapeText(tiles.Menu.menuTitle)+'</title>\n</head>\n'+'<body style="margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:'+pageGradient+';background-attachment:fixed;color:'+theme.text+';">\n'+body+'\n'+menuScript+'\n</body>\n</html>';} function flash(button,label){var original=button.textContent;button.textContent=label;setTimeout(function(){button.textContent=original;},1200);}document.getElementById('saveBtn').addEventListener('click',function(){console.log('%c=== tiles (live object) ===','font-weight:bold');console.log(tiles);console.log('%c=== tiles (copy-paste JSON) ===','font-weight:bold');console.log(JSON.stringify(tiles,null,2));flash(this,'Saved \u2713');});document.getElementById('publishBtn').addEventListener('click',function(){console.log('%c=== published HTML ===','font-weight:bold');console.log(buildPublishHTML());flash(this,'Published \u2713');}); document.body.style.background=pageGradient;document.body.style.backgroundAttachment='fixed';buildTypeModal();renderSite();
+</script>
+</body>
+</html>
