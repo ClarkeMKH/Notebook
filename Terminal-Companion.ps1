@@ -1295,6 +1295,7 @@ function Update-From-N8N {
         Write-Host "Already up to date."
     }
     Read-Host "`n`nPress any button to continue..."
+    exit
 }
 
 
